@@ -46,9 +46,23 @@ ApplyBy is not intended to be a production SaaS platform in its first version.
 
 The first version will focus on a single-user job-search workflow with local or simple hosted persistence. External integrations such as email inbox sync, calendar sync, browser extensions, AI resume rewriting, and multi-user collaboration are future possibilities, not initial requirements.
 
+## Selected Implementation Direction
+
+ApplyBy will be implemented as a full-stack application with:
+
+- Go for the backend service
+- PostgreSQL for persistence
+- React for the frontend UI
+- TypeScript for frontend implementation
+- A layered testing strategy with unit, integration, end-to-end, and helper test areas
+
+These decisions are recorded in `docs/adr/`.
+
 ## Status
 
-Initial repository setup and planning.
+Initial repository setup and architecture decision records are complete.
+
+The next implementation step is to begin the backend foundation in Go, starting with the core domain model and application lifecycle rules before adding persistence, API routes, or frontend behavior.
 
 ## Documentation
 

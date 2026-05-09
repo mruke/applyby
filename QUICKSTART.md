@@ -2,12 +2,22 @@
 
 ApplyBy does not have runnable application code yet.
 
-This document will contain setup, installation, development, test, and benchmark commands once the initial implementation stack is selected.
+The selected implementation direction is:
+
+- Go for the backend service
+- PostgreSQL for persistence
+- React for the frontend UI
+- TypeScript for frontend implementation
+- Layered testing with unit, integration, end-to-end, and helper test areas
+
+This document will be expanded as runnable implementation slices are added.
 
 ## Planned Sections
 
 - Prerequisites
-- Local setup
+- Backend setup
+- Database setup
+- Frontend setup
 - Development commands
 - Test commands
 - Benchmark commands
