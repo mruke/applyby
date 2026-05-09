@@ -1,21 +1,479 @@
 # Architecture
 
-ApplyBy is in the initial planning and repository setup stage.
+ApplyBy is a full-stack personal job application CRM.
 
-This document will describe the architecture once the first implementation slice is defined.
+The project is intended to be both a practical job-search tool and a portfolio project focused on disciplined application design, clear domain modeling, validated workflows, persistence design, search/filtering, reminders, analytics, and layered testing.
 
-## Planned Sections
+This document follows the same lightweight architecture-documentation style used across the author's portfolio projects.
 
-1. Introduction and Goals
-2. Constraints
-3. Solution Strategy
-4. System Context
-5. Container View
-6. Building Block View
-7. Runtime Views
-8. Data Design
-9. Cross-Cutting Concepts
-10. Architecture Decisions and Tradeoffs
-11. Risks and Technical Debt
-12. Glossary
-13. Summary
+---
+
+## 1. Introduction and Goals
+
+### 1.1 Purpose
+
+ApplyBy helps a single user track and manage their job-search pipeline.
+
+The application is intended to support records such as:
+
+- job applications
+- companies
+- contacts
+- interviews
+- follow-ups
+- documents
+- deadlines
+- activity history
+- outcomes
+
+### 1.2 Quality Goals
+
+| Goal | Description |
+| --- | --- |
+| Clear boundaries | Domain, application, storage, API, frontend, search, reminders, and analytics responsibilities should stay separate. |
+| Low coupling | Backend layers should depend on stable domain and application contracts rather than concrete infrastructure details. |
+| Testability | Domain and application behavior should be testable without running the full frontend or database. |
+| Practical scope | The project should show thoughtful full-stack design without becoming a production SaaS platform in its first version. |
+| Portfolio value | The project should demonstrate Go, PostgreSQL, React, TypeScript, data modeling, workflow validation, and layered tests. |
+
+### 1.3 Stakeholders
+
+| Stakeholder | Interest |
+| --- | --- |
+| Author | Build a disciplined full-stack portfolio project and practice good engineering habits. |
+| Job seeker user | Track applications, deadlines, follow-ups, contacts, interviews, and outcomes. |
+| Reviewer or employer | Understand the architecture, design tradeoffs, implementation scope, and testing approach. |
+
+---
+
+## 2. Constraints
+
+### 2.1 Technical Constraints
+
+ApplyBy will use the initial implementation direction recorded in the accepted ADRs:
+
+| Area | Decision |
+| --- | --- |
+| Backend | Go |
+| Persistence | PostgreSQL |
+| Frontend | React |
+| Frontend language | TypeScript |
+| Testing | Layered unit, integration, end-to-end, and helper test areas |
+
+### 2.2 Scope Constraints
+
+The first version is scoped for a single-user job-search workflow.
+
+The first version should not include:
+
+- multi-user collaboration
+- authentication and authorization
+- email inbox sync
+- calendar sync
+- browser extensions
+- AI resume rewriting
+- job scraping
+- production deployment automation
+
+Those features may be considered future extensions.
+
+### 2.3 Process Constraints
+
+The project should be implemented in focused branches and focused commits.
+
+Documentation, domain modeling, persistence, API behavior, frontend behavior, tests, and benchmarks should be added in deliberate steps.
+
+---
+
+## 3. Solution Strategy
+
+ApplyBy will be built as a full-stack application with:
+
+- a Go backend
+- a PostgreSQL database
+- a React + TypeScript frontend
+- layered tests
+
+The backend should be implemented in layers:
+
+| Layer | Responsibility |
+| --- | --- |
+| Domain | Core entities, value objects, lifecycle rules, and validation. |
+| Application | Use cases and workflows. |
+| Storage | PostgreSQL persistence, migrations, repositories, and database-backed queries. |
+| API | HTTP request parsing, response formatting, routing, and error mapping. |
+| Search | Search and filter behavior when the behavior is large enough to deserve separation. |
+| Reminders | Follow-up and due-date behavior when the behavior is large enough to deserve separation. |
+| Analytics | Job-search summaries and reporting data. |
+| Config | Runtime configuration loading and validation. |
+
+Business rules should live in backend domain and application code.
+
+Business rules should not be hidden in:
+
+- HTTP handlers
+- database repositories
+- frontend components
+- SQL query details
+
+---
+
+## 4. System Context
+
+ApplyBy is intended for one user managing their own job-search pipeline.
+
+```text
++--------+        +-------------------+        +-------------------+
+| User   | -----> | React Frontend    | -----> | Go Backend API    |
++--------+        +-------------------+        +-------------------+
+                                                        |
+                                                        v
+                                                +-------------------+
+                                                | PostgreSQL        |
+                                                +-------------------+
+```
+
+### 4.1 External Actors
+
+| Actor | Description |
+| --- | --- |
+| User | The person managing their job-search pipeline. |
+| Browser | Runs the React frontend. |
+| PostgreSQL | Stores job-search records and supports query paths. |
+
+### 4.2 Deferred External Systems
+
+| System | Reason Deferred |
+| --- | --- |
+| Email provider | Inbox sync would increase scope and require authorization concerns. |
+| Calendar provider | Calendar sync is useful but not required for the first version. |
+| Job boards | Scraping or importing job posts would expand the project beyond the core tracker. |
+| AI services | Resume rewriting or matching is future work, not part of the first version. |
+
+---
+
+## 5. Container View
+
+ApplyBy is planned as four main containers.
+
+```text
++-------------------+
+| React Frontend    |
+| TypeScript        |
++-------------------+
+          |
+          v
++-------------------+
+| Go Backend API    |
++-------------------+
+          |
+          v
++-------------------+
+| PostgreSQL        |
++-------------------+
+
++-------------------+
+| Test Suites       |
+| Unit / Integration|
+| E2E / Helpers     |
++-------------------+
+```
+
+### 5.1 Containers
+
+| Container | Technology | Responsibility |
+| --- | --- | --- |
+| React Frontend | React, TypeScript | User-facing screens, forms, display state, and API calls. |
+| Go Backend API | Go | Domain behavior, application workflows, HTTP API boundaries, and coordination between layers. |
+| PostgreSQL | PostgreSQL | Durable relational storage for job-search data. |
+| Test Suites | Go test tools, frontend test tools, E2E tools | Verify behavior across layers and selected full workflows. |
+
+### 5.2 Important Boundary Rules
+
+| Rule | Reason |
+| --- | --- |
+| Frontend components should not own lifecycle rules. | Backend domain/application code should enforce workflow correctness. |
+| HTTP handlers should not contain business rules. | Handlers should translate transport concerns into application use cases. |
+| Repositories should not own workflow rules. | Storage should persist and query data, not decide valid business behavior. |
+| Domain code should not depend on infrastructure. | Domain rules should remain simple, portable, and testable. |
+
+---
+
+## 6. Building Block View
+
+The exact package layout may evolve during implementation, but the intended backend responsibilities are:
+
+```text
+cmd/
+  applyby-api/
+    main.go
+
+internal/
+  domain/
+  application/
+  storage/
+  api/
+  search/
+  reminders/
+  analytics/
+  config/
+```
+
+### 6.1 Backend Building Blocks
+
+| Building Block | Responsibility | Should Not Own |
+| --- | --- | --- |
+| `domain` | Entities, value objects, status values, lifecycle rules, domain validation, domain errors. | Database access, HTTP behavior, frontend behavior. |
+| `application` | Use cases such as creating applications, updating statuses, scheduling follow-ups, and recording activity. | SQL details, HTTP response formatting, UI state. |
+| `storage` | PostgreSQL schema, migrations, repositories, database-backed queries, integration tests. | Core workflow decisions. |
+| `api` | Routes, request parsing, response formatting, error mapping, handler tests. | Business rules. |
+| `search` | Search criteria, filter criteria, sort criteria, search-related validation. | UI rendering. |
+| `reminders` | Due reminder selection, priority behavior, follow-up scheduling behavior. | API routing or frontend display. |
+| `analytics` | Job-search summaries and reporting data. | Frontend rendering. |
+| `config` | Configuration loading and validation. | Domain behavior. |
+
+### 6.2 Frontend Building Blocks
+
+The exact frontend structure may evolve during implementation, but the intended responsibilities are:
+
+| Building Block | Responsibility | Should Not Own |
+| --- | --- | --- |
+| API client | Backend request functions and response handling. | Backend business rules. |
+| Pages | Route-level screens such as application list, detail, and dashboard views. | Persistence logic. |
+| Components | Reusable UI pieces such as forms, tables, cards, filters, and status displays. | Lifecycle validation. |
+| Types | TypeScript models for frontend data and API responses. | Backend storage definitions. |
+| Tests | Component behavior, UI workflows, and selected E2E flows. | Backend unit coverage. |
+
+---
+
+## 7. Runtime Views
+
+### 7.1 Create Application
+
+```text
+User
+  -> React form
+  -> Backend API request
+  -> Application use case
+  -> Domain validation
+  -> PostgreSQL repository
+  -> API response
+  -> Frontend updates view
+```
+
+The create workflow should validate required fields and create an initial application record.
+
+### 7.2 Update Application Status
+
+```text
+User
+  -> Status update control
+  -> Backend API request
+  -> Application use case
+  -> Domain status transition validation
+  -> Activity event recorded
+  -> Application status persisted
+  -> API response
+```
+
+Status transitions should be validated by backend domain/application logic.
+
+### 7.3 Schedule Follow-Up
+
+```text
+User
+  -> Follow-up input
+  -> Backend API request
+  -> Application use case
+  -> Reminder validation
+  -> Reminder persisted
+  -> API response
+```
+
+Follow-up logic should support reminder queries and future prioritization.
+
+### 7.4 Search and Filter Applications
+
+```text
+User
+  -> Search/filter controls
+  -> Backend API request
+  -> Query criteria validation
+  -> Repository query
+  -> API response
+  -> Frontend list updates
+```
+
+Search and filtering should rely on intentional query paths rather than ad hoc frontend-only filtering for all behavior.
+
+---
+
+## 8. Data Design
+
+ApplyBy data is naturally relational.
+
+### 8.1 Planned Records
+
+| Record | Description |
+| --- | --- |
+| Application | A tracked job opportunity or submitted job application. |
+| Company | An organization associated with one or more applications. |
+| Contact | A person associated with a company, application, referral, recruiter interaction, or interview process. |
+| Interview | A scheduled or completed interview event. |
+| Reminder | A follow-up or deadline item. |
+| Document | Metadata for a resume, cover letter, portfolio item, or related file. |
+| Activity Event | A historical event describing something that happened in the system. |
+| Status History | A record of application status changes over time. |
+
+### 8.2 Conceptual Model
+
+```text
+Company
+  -> many Applications
+  -> many Contacts
+
+Application
+  -> belongs to Company
+  -> many Interviews
+  -> many Reminders
+  -> many Documents
+  -> many Activity Events
+  -> many Status History entries
+```
+
+### 8.3 PostgreSQL Responsibilities
+
+PostgreSQL should support:
+
+- relational integrity
+- unique constraints where appropriate
+- foreign keys
+- indexed search and filtering
+- due reminder queries
+- analytics-oriented queries
+
+The first persistence implementation should avoid overcomplicated schema design. The schema should support the first application workflows while leaving room for later features.
+
+---
+
+## 9. Cross-Cutting Concepts
+
+### 9.1 Domain Rules
+
+Application lifecycle rules should be centralized in backend domain/application layers.
+
+Frontend components may display available options, but backend code should enforce valid transitions.
+
+### 9.2 Activity History
+
+Important user actions should eventually be represented as activity events.
+
+Activity history should help answer:
+
+- what changed
+- when it changed
+- why the current application state exists
+
+### 9.3 Search and Filtering
+
+Search and filtering are core product behaviors, not incidental UI features.
+
+The backend and database should provide clear query paths for common views such as:
+
+- active applications
+- upcoming follow-ups
+- applications by status
+- applications by company
+- applications by source
+- applications with interviews
+- applications needing follow-up
+
+### 9.4 Reminder Priority
+
+Reminders and follow-ups are central to the product.
+
+Priority behavior should be explicit and testable rather than hidden in UI sorting logic.
+
+### 9.5 Testing
+
+Tests should verify behavior, not implementation details.
+
+| Test Type | Purpose |
+| --- | --- |
+| Unit tests | Verify domain rules, lifecycle transitions, reminder behavior, search helpers, analytics calculations, and small services. |
+| Integration tests | Verify database-backed behavior, repositories, API boundaries, and persistence workflows. |
+| End-to-end tests | Verify a small number of important user workflows once the UI exists. |
+| Test helpers | Reduce duplication without hiding test intent. |
+
+### 9.6 Documentation
+
+Documentation should stay aligned with implementation state.
+
+| Document | Responsibility |
+| --- | --- |
+| `README.md` | High-level project overview, purpose, stack, status, and portfolio framing. |
+| `QUICKSTART.md` | Practical setup and run commands once runnable slices exist. |
+| `ARCHITECTURE.md` | System boundaries, design strategy, runtime views, and tradeoffs. |
+| `docs/adr/` | Concrete architecture decisions. |
+
+---
+
+## 10. Architecture Decisions and Tradeoffs
+
+### 10.1 Accepted ADRs
+
+| ADR | Decision |
+| --- | --- |
+| ADR-001 | Select Go for the backend service. |
+| ADR-002 | Select PostgreSQL for persistence. |
+| ADR-003 | Select React for the frontend UI. |
+| ADR-004 | Select TypeScript for frontend implementation. |
+| ADR-005 | Select a layered testing strategy. |
+
+### 10.2 Tradeoffs
+
+| Decision | Benefit | Tradeoff |
+| --- | --- | --- |
+| Go backend | Static typing, explicit error handling, built-in testing and benchmarking, useful portfolio signal. | New language and package-structure learning curve. |
+| PostgreSQL | Strong relational modeling, constraints, indexes, search support, analytics queries. | More setup than SQLite or file-based storage. |
+| React | Component-based interactive UI development. | Adds frontend build tooling and state-management decisions. |
+| TypeScript | More explicit frontend data contracts. | Adds configuration and type complexity. |
+| Layered testing | Clear verification across domain, persistence, API, frontend, and workflows. | Requires more organization than a minimal test setup. |
+
+---
+
+## 11. Risks and Technical Debt
+
+| Risk | Description | Mitigation |
+| --- | --- | --- |
+| Scope growth | The project can become too broad if all planned features are implemented at once. | Use focused branches and keep commits tied to clear goals. |
+| Stack complexity | Go, PostgreSQL, React, and TypeScript create more setup than a single-language local application. | Add setup commands gradually as runnable slices are introduced. |
+| Boundary drift | Business rules may drift into handlers, repositories, or frontend components. | Keep domain and application tests focused on lifecycle rules and workflows. |
+| Database test setup | Integration tests require a reliable PostgreSQL test setup. | Document test database setup before adding database-heavy workflows. |
+| Contract drift | Frontend types and backend responses can diverge. | Keep response shapes simple and document contracts as they stabilize. |
+
+---
+
+## 12. Glossary
+
+| Term | Definition |
+| --- | --- |
+| Application | A tracked job opportunity or submitted job application. |
+| Company | An organization associated with one or more applications. |
+| Contact | A person connected to a company, role, referral, recruiter interaction, or interview process. |
+| Interview | A scheduled or completed interview event for an application. |
+| Reminder | A follow-up or deadline item associated with the job-search workflow. |
+| Activity Event | A historical record of something that happened in the system, such as a status change or note update. |
+| Status Transition | A change from one application lifecycle status to another. |
+| Repository | A storage abstraction used by application code to persist and retrieve data. |
+| Use Case | An application workflow such as creating an application, updating status, or scheduling a follow-up. |
+
+---
+
+## 13. Summary
+
+ApplyBy will be built as a full-stack personal job application CRM using a Go backend, PostgreSQL persistence, React frontend, TypeScript frontend implementation, and layered testing.
+
+The project should demonstrate disciplined architecture and practical software engineering habits.
+
+The first implementation work should begin with backend domain modeling and lifecycle rules before adding persistence, API routes, or frontend behavior.

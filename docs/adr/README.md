@@ -1,16 +1,14 @@
-## Preliminary Technical Direction
+# Architecture Decision Records
 
-ApplyBy is currently evaluating an initial stack that supports a performance-conscious job application CRM.
+This directory contains the initial architecture decision records for ApplyBy.
 
-The proposed direction is:
+The accepted initial implementation direction is:
 
 - Go for the backend service
 - PostgreSQL for persistence
 - React for the frontend UI
 - TypeScript for frontend implementation
 - A layered testing strategy with unit, integration, end-to-end, and helper test areas
-
-These decisions are not final until the related ADRs are accepted.
 
 See:
 
