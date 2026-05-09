@@ -1,0 +1,127 @@
+package domain
+
+import (
+	"fmt"
+	"time"
+)
+
+// -----------------------------------------------------------------------------
+// ActivityEventType
+//
+// Represents a typed activity history event category.
+// -----------------------------------------------------------------------------
+type ActivityEventType string
+
+const (
+	// -------------------------------------------------------------------------
+	// ActivityApplicationCreated
+	//
+	// Represents creation of a new application record.
+	// -------------------------------------------------------------------------
+	ActivityApplicationCreated ActivityEventType = "application_created"
+
+	// -------------------------------------------------------------------------
+	// ActivityStatusChanged
+	//
+	// Represents a status change in the application lifecycle.
+	// -------------------------------------------------------------------------
+	ActivityStatusChanged ActivityEventType = "status_changed"
+
+	// -------------------------------------------------------------------------
+	// ActivityNoteAdded
+	//
+	// Represents a note added to an application.
+	// -------------------------------------------------------------------------
+	ActivityNoteAdded ActivityEventType = "note_added"
+
+	// -------------------------------------------------------------------------
+	// ActivityReminderScheduled
+	//
+	// Represents a reminder or follow-up being scheduled.
+	// -------------------------------------------------------------------------
+	ActivityReminderScheduled ActivityEventType = "reminder_scheduled"
+
+	// -------------------------------------------------------------------------
+	// ActivityDocumentAdded
+	//
+	// Represents document metadata being attached to an application.
+	// -------------------------------------------------------------------------
+	ActivityDocumentAdded ActivityEventType = "document_added"
+)
+
+// -----------------------------------------------------------------------------
+// ActivityEvent
+//
+// Represents an append-only historical fact about the job-search workflow.
+// -----------------------------------------------------------------------------
+type ActivityEvent struct {
+	Type        ActivityEventType
+	OccurredAt  time.Time
+	Description string
+}
+
+// -----------------------------------------------------------------------------
+// AllActivityEventTypes
+//
+// Returns every supported activity event type in a stable order.
+// -----------------------------------------------------------------------------
+func AllActivityEventTypes() []ActivityEventType {
+	return []ActivityEventType{
+		ActivityApplicationCreated,
+		ActivityStatusChanged,
+		ActivityNoteAdded,
+		ActivityReminderScheduled,
+		ActivityDocumentAdded,
+	}
+}
+
+// -----------------------------------------------------------------------------
+// IsValidActivityEventType
+//
+// Reports whether a value is one of the supported activity event types.
+// -----------------------------------------------------------------------------
+func IsValidActivityEventType(eventType ActivityEventType) bool {
+	for _, validType := range AllActivityEventTypes() {
+		if eventType == validType {
+			return true
+		}
+	}
+
+	return false
+}
+
+// -----------------------------------------------------------------------------
+// NewActivityEvent
+//
+// Creates an activity event after applying basic domain validation.
+// -----------------------------------------------------------------------------
+func NewActivityEvent(eventType ActivityEventType, occurredAt time.Time, description string) (ActivityEvent, error) {
+	event := ActivityEvent{
+		Type:        eventType,
+		OccurredAt:  occurredAt,
+		Description: description,
+	}
+
+	if err := event.Validate(); err != nil {
+		return ActivityEvent{}, err
+	}
+
+	return event, nil
+}
+
+// -----------------------------------------------------------------------------
+// Validate
+//
+// Verifies that an activity event has a valid type, timestamp, and description.
+// -----------------------------------------------------------------------------
+func (event ActivityEvent) Validate() error {
+	if !IsValidActivityEventType(event.Type) {
+		return fmt.Errorf("invalid activity event type: %q", event.Type)
+	}
+
+	if err := requireNonZeroTime("activity event timestamp", event.OccurredAt); err != nil {
+		return err
+	}
+
+	return requireNonEmptyField("activity event description", event.Description)
+}
