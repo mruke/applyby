@@ -1,4 +1,4 @@
-﻿package main
+package main
 
 import "fmt"
 
@@ -8,5 +8,5 @@ import "fmt"
 // Starts the ApplyBy backend API entry point.
 // -----------------------------------------------------------------------------
 func main() {
-    fmt.Println("ApplyBy backend foundation")
+	fmt.Println("ApplyBy backend foundation")
 }
