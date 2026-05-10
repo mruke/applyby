@@ -6,14 +6,41 @@ import (
 )
 
 // -----------------------------------------------------------------------------
+// ContactID
+//
+// Represents the stable domain identity for a contact.
+// -----------------------------------------------------------------------------
+type ContactID string
+
+// -----------------------------------------------------------------------------
+// Validate
+//
+// Verifies that a contact identity contains a non-empty value.
+// -----------------------------------------------------------------------------
+func (id ContactID) Validate() error {
+	return requireNonEmptyField("contact id", string(id))
+}
+
+// -----------------------------------------------------------------------------
+// String
+//
+// Returns the text representation of a contact identity.
+// -----------------------------------------------------------------------------
+func (id ContactID) String() string {
+	return string(id)
+}
+
+// -----------------------------------------------------------------------------
 // Contact
 //
-// Represents a person connected to a company, application, or job-search process.
+// Represents a person connected to an application or job-search process.
 // -----------------------------------------------------------------------------
 type Contact struct {
-	Name  string
-	Email string
-	Role  string
+	ID            ContactID
+	ApplicationID ApplicationID
+	Name          string
+	Email         string
+	Role          string
 }
 
 // -----------------------------------------------------------------------------
@@ -21,11 +48,13 @@ type Contact struct {
 //
 // Creates a contact after applying basic domain validation.
 // -----------------------------------------------------------------------------
-func NewContact(name string, email string, role string) (Contact, error) {
+func NewContact(id ContactID, applicationID ApplicationID, name string, email string, role string) (Contact, error) {
 	contact := Contact{
-		Name:  name,
-		Email: email,
-		Role:  role,
+		ID:            id,
+		ApplicationID: applicationID,
+		Name:          name,
+		Email:         email,
+		Role:          role,
 	}
 
 	if err := contact.Validate(); err != nil {
@@ -38,9 +67,17 @@ func NewContact(name string, email string, role string) (Contact, error) {
 // -----------------------------------------------------------------------------
 // Validate
 //
-// Verifies that a contact has a name and a valid optional email shape.
+// Verifies that a contact has identity, application ownership, a name, and a valid optional email shape.
 // -----------------------------------------------------------------------------
 func (contact Contact) Validate() error {
+	if err := contact.ID.Validate(); err != nil {
+		return err
+	}
+
+	if err := contact.ApplicationID.Validate(); err != nil {
+		return err
+	}
+
 	if err := requireNonEmptyField("contact name", contact.Name); err != nil {
 		return err
 	}
