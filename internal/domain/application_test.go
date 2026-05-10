@@ -11,10 +11,11 @@ import (
 // Verifies that a valid application can be created.
 // -----------------------------------------------------------------------------
 func TestNewApplicationAcceptsValidApplication(t *testing.T) {
+	id := ApplicationID("app-001")
 	company := Company{Name: "Example Studio"}
 	createdAt := time.Date(2026, 5, 10, 8, 0, 0, 0, time.UTC)
 
-	application, err := NewApplication("Backend Developer", company, StatusApplied, createdAt)
+	application, err := NewApplication(id, "Backend Developer", company, StatusApplied, createdAt)
 
 	if err != nil {
 		t.Fatalf("expected application to be valid: %v", err)
@@ -26,6 +27,21 @@ func TestNewApplicationAcceptsValidApplication(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+// TestNewApplicationRejectsMissingID
+//
+// Verifies that an application without an identity is rejected.
+// -----------------------------------------------------------------------------
+func TestNewApplicationRejectsMissingID(t *testing.T) {
+	company := Company{Name: "Example Studio"}
+
+	_, err := NewApplication("", "Backend Developer", company, StatusApplied, time.Now())
+
+	if err == nil {
+		t.Fatal("expected application without an id to be invalid")
+	}
+}
+
+// -----------------------------------------------------------------------------
 // TestNewApplicationRejectsMissingTitle
 //
 // Verifies that an application without a title is rejected.
@@ -33,7 +49,7 @@ func TestNewApplicationAcceptsValidApplication(t *testing.T) {
 func TestNewApplicationRejectsMissingTitle(t *testing.T) {
 	company := Company{Name: "Example Studio"}
 
-	_, err := NewApplication("", company, StatusApplied, time.Now())
+	_, err := NewApplication("app-001", "", company, StatusApplied, time.Now())
 
 	if err == nil {
 		t.Fatal("expected application without a title to be invalid")
@@ -48,7 +64,7 @@ func TestNewApplicationRejectsMissingTitle(t *testing.T) {
 func TestNewApplicationRejectsInvalidCompany(t *testing.T) {
 	company := Company{}
 
-	_, err := NewApplication("Backend Developer", company, StatusApplied, time.Now())
+	_, err := NewApplication("app-001", "Backend Developer", company, StatusApplied, time.Now())
 
 	if err == nil {
 		t.Fatal("expected application with invalid company to be invalid")
@@ -63,7 +79,7 @@ func TestNewApplicationRejectsInvalidCompany(t *testing.T) {
 func TestNewApplicationRejectsInvalidStatus(t *testing.T) {
 	company := Company{Name: "Example Studio"}
 
-	_, err := NewApplication("Backend Developer", company, ApplicationStatus("paused"), time.Now())
+	_, err := NewApplication("app-001", "Backend Developer", company, ApplicationStatus("paused"), time.Now())
 
 	if err == nil {
 		t.Fatal("expected application with invalid status to be invalid")
@@ -81,6 +97,7 @@ func TestApplicationValidateRejectsAppliedDateBeforeCreatedDate(t *testing.T) {
 	appliedAt := time.Date(2026, 5, 9, 8, 0, 0, 0, time.UTC)
 
 	application := Application{
+		ID:        "app-001",
 		Title:     "Backend Developer",
 		Company:   company,
 		Status:    StatusApplied,

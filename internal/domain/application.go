@@ -11,6 +11,7 @@ import (
 // Represents a tracked job application in the ApplyBy domain.
 // -----------------------------------------------------------------------------
 type Application struct {
+	ID             ApplicationID
 	Title          string
 	Company        Company
 	Status         ApplicationStatus
@@ -29,8 +30,9 @@ type Application struct {
 //
 // Creates an application after applying basic domain validation.
 // -----------------------------------------------------------------------------
-func NewApplication(title string, company Company, status ApplicationStatus, createdAt time.Time) (Application, error) {
+func NewApplication(id ApplicationID, title string, company Company, status ApplicationStatus, createdAt time.Time) (Application, error) {
 	application := Application{
+		ID:        id,
 		Title:     title,
 		Company:   company,
 		Status:    status,
@@ -50,6 +52,10 @@ func NewApplication(title string, company Company, status ApplicationStatus, cre
 // Verifies that an application has the minimum valid domain shape.
 // -----------------------------------------------------------------------------
 func (application Application) Validate() error {
+	if err := application.ID.Validate(); err != nil {
+		return err
+	}
+
 	if err := requireNonEmptyField("application title", application.Title); err != nil {
 		return err
 	}
