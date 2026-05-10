@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 )
 
 // -----------------------------------------------------------------------------
@@ -19,14 +20,25 @@ func RunMigrations(ctx context.Context, db *sql.DB) error {
 		return os.ErrInvalid
 	}
 
-	migrationPath := filepath.Join(filepath.Dir(filename), "migrations", "001_create_applications.sql")
+	migrationDir := filepath.Join(filepath.Dir(filename), "migrations")
 
-	migrationSQL, err := os.ReadFile(migrationPath)
+	migrationPaths, err := filepath.Glob(filepath.Join(migrationDir, "*.sql"))
 	if err != nil {
 		return err
 	}
 
-	_, err = db.ExecContext(ctx, string(migrationSQL))
+	sort.Strings(migrationPaths)
 
-	return err
+	for _, migrationPath := range migrationPaths {
+		migrationSQL, err := os.ReadFile(migrationPath)
+		if err != nil {
+			return err
+		}
+
+		if _, err := db.ExecContext(ctx, string(migrationSQL)); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
