@@ -52,12 +52,13 @@ const (
 // -----------------------------------------------------------------------------
 // ActivityEvent
 //
-// Represents an append-only historical fact about the job-search workflow.
+// Represents an append-only historical fact about an application.
 // -----------------------------------------------------------------------------
 type ActivityEvent struct {
-	Type        ActivityEventType
-	OccurredAt  time.Time
-	Description string
+	ApplicationID ApplicationID
+	Type          ActivityEventType
+	OccurredAt    time.Time
+	Description   string
 }
 
 // -----------------------------------------------------------------------------
@@ -95,11 +96,12 @@ func IsValidActivityEventType(eventType ActivityEventType) bool {
 //
 // Creates an activity event after applying basic domain validation.
 // -----------------------------------------------------------------------------
-func NewActivityEvent(eventType ActivityEventType, occurredAt time.Time, description string) (ActivityEvent, error) {
+func NewActivityEvent(applicationID ApplicationID, eventType ActivityEventType, occurredAt time.Time, description string) (ActivityEvent, error) {
 	event := ActivityEvent{
-		Type:        eventType,
-		OccurredAt:  occurredAt,
-		Description: description,
+		ApplicationID: applicationID,
+		Type:          eventType,
+		OccurredAt:    occurredAt,
+		Description:   description,
 	}
 
 	if err := event.Validate(); err != nil {
@@ -112,9 +114,13 @@ func NewActivityEvent(eventType ActivityEventType, occurredAt time.Time, descrip
 // -----------------------------------------------------------------------------
 // Validate
 //
-// Verifies that an activity event has a valid type, timestamp, and description.
+// Verifies that an activity event has a valid application, type, timestamp, and description.
 // -----------------------------------------------------------------------------
 func (event ActivityEvent) Validate() error {
+	if err := event.ApplicationID.Validate(); err != nil {
+		return err
+	}
+
 	if !IsValidActivityEventType(event.Type) {
 		return fmt.Errorf("invalid activity event type: %q", event.Type)
 	}

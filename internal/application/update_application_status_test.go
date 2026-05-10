@@ -16,7 +16,8 @@ import (
 // -----------------------------------------------------------------------------
 func TestUpdateApplicationStatusServiceSavesAllowedTransition(t *testing.T) {
 	repository := newFakeApplicationRepository()
-	service := NewUpdateApplicationStatusService(repository)
+	historyRepository := &fakeApplicationHistoryRepository{}
+	service := NewUpdateApplicationStatusService(repository, historyRepository)
 
 	application, err := domain.NewApplication(
 		"app-001",
@@ -43,6 +44,14 @@ func TestUpdateApplicationStatusServiceSavesAllowedTransition(t *testing.T) {
 	if updatedApplication.Status != domain.StatusInterviewing {
 		t.Fatalf("expected application status to be updated")
 	}
+
+	if len(historyRepository.statusHistory) != 1 {
+		t.Fatalf("expected one status history record")
+	}
+
+	if len(historyRepository.activityEvents) != 1 {
+		t.Fatalf("expected one activity event")
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -52,7 +61,8 @@ func TestUpdateApplicationStatusServiceSavesAllowedTransition(t *testing.T) {
 // -----------------------------------------------------------------------------
 func TestUpdateApplicationStatusServiceRejectsInvalidTransition(t *testing.T) {
 	repository := newFakeApplicationRepository()
-	service := NewUpdateApplicationStatusService(repository)
+	historyRepository := &fakeApplicationHistoryRepository{}
+	service := NewUpdateApplicationStatusService(repository, historyRepository)
 
 	application, err := domain.NewApplication(
 		"app-001",
@@ -79,6 +89,14 @@ func TestUpdateApplicationStatusServiceRejectsInvalidTransition(t *testing.T) {
 	if repository.saveCalls != 0 {
 		t.Fatal("expected invalid status transition not to be saved")
 	}
+
+	if len(historyRepository.statusHistory) != 0 {
+		t.Fatal("expected invalid status transition not to record status history")
+	}
+
+	if len(historyRepository.activityEvents) != 0 {
+		t.Fatal("expected invalid status transition not to record activity events")
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -89,7 +107,8 @@ func TestUpdateApplicationStatusServiceRejectsInvalidTransition(t *testing.T) {
 func TestUpdateApplicationStatusServiceReturnsFindError(t *testing.T) {
 	repository := newFakeApplicationRepository()
 	repository.findErr = errors.New("find failed")
-	service := NewUpdateApplicationStatusService(repository)
+	historyRepository := &fakeApplicationHistoryRepository{}
+	service := NewUpdateApplicationStatusService(repository, historyRepository)
 
 	_, err := service.Execute(context.Background(), UpdateApplicationStatusInput{
 		ID:     "app-001",
@@ -109,7 +128,8 @@ func TestUpdateApplicationStatusServiceReturnsFindError(t *testing.T) {
 func TestUpdateApplicationStatusServiceReturnsSaveError(t *testing.T) {
 	repository := newFakeApplicationRepository()
 	repository.saveErr = errors.New("save failed")
-	service := NewUpdateApplicationStatusService(repository)
+	historyRepository := &fakeApplicationHistoryRepository{}
+	service := NewUpdateApplicationStatusService(repository, historyRepository)
 
 	application, err := domain.NewApplication(
 		"app-001",
@@ -132,6 +152,80 @@ func TestUpdateApplicationStatusServiceReturnsSaveError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected save error to be returned")
 	}
+
+	if len(historyRepository.statusHistory) != 0 {
+		t.Fatal("expected save failure not to record status history")
+	}
+}
+
+// -----------------------------------------------------------------------------
+// TestUpdateApplicationStatusServiceReturnsStatusHistoryError
+//
+// Verifies that status history recording errors are returned to the caller.
+// -----------------------------------------------------------------------------
+func TestUpdateApplicationStatusServiceReturnsStatusHistoryError(t *testing.T) {
+	repository := newFakeApplicationRepository()
+	historyRepository := &fakeApplicationHistoryRepository{
+		recordStatusErr: errors.New("status history failed"),
+	}
+	service := NewUpdateApplicationStatusService(repository, historyRepository)
+
+	application, err := domain.NewApplication(
+		"app-001",
+		"Backend Developer",
+		domain.Company{Name: "Example Studio"},
+		domain.StatusApplied,
+		time.Now(),
+	)
+	if err != nil {
+		t.Fatalf("failed to create test application: %v", err)
+	}
+
+	repository.applications[application.ID] = application
+
+	_, err = service.Execute(context.Background(), UpdateApplicationStatusInput{
+		ID:     "app-001",
+		Status: domain.StatusInterviewing,
+	})
+
+	if err == nil {
+		t.Fatal("expected status history error to be returned")
+	}
+}
+
+// -----------------------------------------------------------------------------
+// TestUpdateApplicationStatusServiceReturnsActivityEventError
+//
+// Verifies that activity event recording errors are returned to the caller.
+// -----------------------------------------------------------------------------
+func TestUpdateApplicationStatusServiceReturnsActivityEventError(t *testing.T) {
+	repository := newFakeApplicationRepository()
+	historyRepository := &fakeApplicationHistoryRepository{
+		recordEventErr: errors.New("activity event failed"),
+	}
+	service := NewUpdateApplicationStatusService(repository, historyRepository)
+
+	application, err := domain.NewApplication(
+		"app-001",
+		"Backend Developer",
+		domain.Company{Name: "Example Studio"},
+		domain.StatusApplied,
+		time.Now(),
+	)
+	if err != nil {
+		t.Fatalf("failed to create test application: %v", err)
+	}
+
+	repository.applications[application.ID] = application
+
+	_, err = service.Execute(context.Background(), UpdateApplicationStatusInput{
+		ID:     "app-001",
+		Status: domain.StatusInterviewing,
+	})
+
+	if err == nil {
+		t.Fatal("expected activity event error to be returned")
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -140,7 +234,7 @@ func TestUpdateApplicationStatusServiceReturnsSaveError(t *testing.T) {
 // Verifies that the status workflow requires a repository boundary.
 // -----------------------------------------------------------------------------
 func TestUpdateApplicationStatusServiceRequiresRepository(t *testing.T) {
-	service := NewUpdateApplicationStatusService(nil)
+	service := NewUpdateApplicationStatusService(nil, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), UpdateApplicationStatusInput{
 		ID:     "app-001",
@@ -149,5 +243,24 @@ func TestUpdateApplicationStatusServiceRequiresRepository(t *testing.T) {
 
 	if err == nil {
 		t.Fatal("expected missing repository to be rejected")
+	}
+}
+
+// -----------------------------------------------------------------------------
+// TestUpdateApplicationStatusServiceRequiresHistoryRecorder
+//
+// Verifies that the status workflow requires a history recorder boundary.
+// -----------------------------------------------------------------------------
+func TestUpdateApplicationStatusServiceRequiresHistoryRecorder(t *testing.T) {
+	repository := newFakeApplicationRepository()
+	service := NewUpdateApplicationStatusService(repository, nil)
+
+	_, err := service.Execute(context.Background(), UpdateApplicationStatusInput{
+		ID:     "app-001",
+		Status: domain.StatusInterviewing,
+	})
+
+	if err == nil {
+		t.Fatal("expected missing history recorder to be rejected")
 	}
 }

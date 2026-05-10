@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/mruke/applyby/internal/domain"
 )
@@ -33,7 +34,8 @@ type UpdateApplicationStatusInput struct {
 // Coordinates the workflow for changing an application status.
 // -----------------------------------------------------------------------------
 type UpdateApplicationStatusService struct {
-	repository ApplicationStatusUpdaterRepository
+	repository      ApplicationStatusUpdaterRepository
+	historyRecorder ApplicationHistoryRecorder
 }
 
 // -----------------------------------------------------------------------------
@@ -41,20 +43,28 @@ type UpdateApplicationStatusService struct {
 //
 // Creates a service for the update application status workflow.
 // -----------------------------------------------------------------------------
-func NewUpdateApplicationStatusService(repository ApplicationStatusUpdaterRepository) UpdateApplicationStatusService {
+func NewUpdateApplicationStatusService(
+	repository ApplicationStatusUpdaterRepository,
+	historyRecorder ApplicationHistoryRecorder,
+) UpdateApplicationStatusService {
 	return UpdateApplicationStatusService{
-		repository: repository,
+		repository:      repository,
+		historyRecorder: historyRecorder,
 	}
 }
 
 // -----------------------------------------------------------------------------
 // Execute
 //
-// Loads an application, validates the lifecycle transition, and saves the change.
+// Loads an application, validates the lifecycle transition, saves the change, and records history.
 // -----------------------------------------------------------------------------
 func (service UpdateApplicationStatusService) Execute(ctx context.Context, input UpdateApplicationStatusInput) (domain.Application, error) {
 	if service.repository == nil {
 		return domain.Application{}, fmt.Errorf("application status updater repository is required")
+	}
+
+	if service.historyRecorder == nil {
+		return domain.Application{}, fmt.Errorf("application history recorder is required")
 	}
 
 	application, err := service.repository.FindApplicationByID(ctx, input.ID)
@@ -62,8 +72,10 @@ func (service UpdateApplicationStatusService) Execute(ctx context.Context, input
 		return domain.Application{}, err
 	}
 
+	fromStatus := application.Status
+
 	transition := domain.ApplicationStatusTransition{
-		From: application.Status,
+		From: fromStatus,
 		To:   input.Status,
 	}
 
@@ -71,9 +83,34 @@ func (service UpdateApplicationStatusService) Execute(ctx context.Context, input
 		return domain.Application{}, err
 	}
 
+	changedAt := time.Now().UTC()
+
+	statusHistory, err := domain.NewApplicationStatusHistory(application.ID, fromStatus, input.Status, changedAt)
+	if err != nil {
+		return domain.Application{}, err
+	}
+
+	activityEvent, err := domain.NewActivityEvent(
+		application.ID,
+		domain.ActivityStatusChanged,
+		changedAt,
+		fmt.Sprintf("Status changed from %s to %s.", fromStatus, input.Status),
+	)
+	if err != nil {
+		return domain.Application{}, err
+	}
+
 	application.Status = input.Status
 
 	if err := service.repository.SaveApplication(ctx, application); err != nil {
+		return domain.Application{}, err
+	}
+
+	if err := service.historyRecorder.RecordApplicationStatusHistory(ctx, statusHistory); err != nil {
+		return domain.Application{}, err
+	}
+
+	if err := service.historyRecorder.RecordActivityEvent(ctx, activityEvent); err != nil {
 		return domain.Application{}, err
 	}
 
