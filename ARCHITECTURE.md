@@ -66,13 +66,10 @@ The first version is scoped for a single-user job-search workflow.
 
 The first version should not include:
 
-- multi-user collaboration
 - authentication and authorization
-- email inbox sync
-- calendar sync
-- browser extensions
-- AI resume rewriting
-- job scraping
+- employer-facing workflows
+- file upload and file storage
+- calendar integrations
 - production deployment automation
 
 Those features may be considered future extensions.

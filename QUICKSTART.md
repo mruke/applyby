@@ -1,6 +1,6 @@
 # Quickstart
 
-ApplyBy does not have runnable application code yet.
+ApplyBy currently has a runnable Go backend test workflow and a Docker Compose PostgreSQL development database.
 
 The selected implementation direction is:
 
