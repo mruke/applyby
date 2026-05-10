@@ -83,7 +83,7 @@ func TestIsOverdue(t *testing.T) {
 func newReminderPriorityTestReminder(t *testing.T, title string, dueAt time.Time, completed bool) domain.Reminder {
 	t.Helper()
 
-	reminder, err := domain.NewReminder(title, dueAt)
+	reminder, err := domain.NewReminder(domain.ReminderID(title), "app-001", title, dueAt)
 	if err != nil {
 		t.Fatalf("failed to create reminder: %v", err)
 	}
