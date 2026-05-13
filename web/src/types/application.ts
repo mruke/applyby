@@ -92,6 +92,27 @@ export type RemindersResponse = {
 };
 
 /**
+ * CreateReminderFormValues
+ *
+ * Represents user-entered values from the schedule reminder form.
+ */
+export type CreateReminderFormValues = {
+  title: string;
+  dueAt: string;
+};
+
+/**
+ * CreateReminderRequest
+ *
+ * Represents the backend request body for scheduling a reminder.
+ */
+export type CreateReminderRequest = {
+  id: string;
+  title: string;
+  due_at: string;
+};
+
+/**
  * ActivityEventResponse
  *
  * Represents one activity timeline event returned by the backend API.

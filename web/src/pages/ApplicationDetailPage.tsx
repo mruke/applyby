@@ -1,24 +1,39 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
+import { getActivityEvents } from "../api/activity";
 import { getApplicationById, updateApplicationStatus } from "../api/applications";
+import { completeReminder, getReminders, scheduleReminder } from "../api/reminders";
+import { ActivityTimeline } from "../components/ActivityTimeline";
 import { EmptyState } from "../components/EmptyState";
 import { ErrorState } from "../components/ErrorState";
 import { LoadingState } from "../components/LoadingState";
+import { ReminderForm } from "../components/ReminderForm";
+import { ReminderList } from "../components/ReminderList";
 import { StatusBadge } from "../components/StatusBadge";
 import { StatusUpdateForm } from "../components/StatusUpdateForm";
-import type { ApplicationResponse, ApplicationStatus } from "../types/application";
+import type {
+  ActivityEventResponse,
+  ApplicationResponse,
+  ApplicationStatus,
+  CreateReminderFormValues,
+  ReminderResponse
+} from "../types/application";
 
 /**
  * ApplicationDetailPageState
  *
- * Represents the loading and status update state for the application detail page.
+ * Represents the loading and workflow state for the application detail page.
  */
 type ApplicationDetailPageState = {
+  activityEvents: ActivityEventResponse[];
   application: ApplicationResponse | null;
   errorMessage: string | null;
+  isCompletingReminder: boolean;
   isLoading: boolean;
+  isSubmittingReminder: boolean;
   isSubmittingStatus: boolean;
+  reminders: ReminderResponse[];
   successMessage: string | null;
 };
 
@@ -38,51 +53,73 @@ function formatDate(timestamp: string): string {
 /**
  * ApplicationDetailPage
  *
- * Loads one application from the existing applications API and exposes
- * summary details plus a status update workflow.
+ * Loads one application from the existing applications API and exposes summary,
+ * status, reminder, and activity timeline workflows.
  */
 export function ApplicationDetailPage() {
   const { applicationId } = useParams<{ applicationId: string }>();
 
   const [state, setState] = useState<ApplicationDetailPageState>({
+    activityEvents: [],
     application: null,
     errorMessage: null,
+    isCompletingReminder: false,
     isLoading: true,
+    isSubmittingReminder: false,
     isSubmittingStatus: false,
+    reminders: [],
     successMessage: null
   });
 
   /**
-   * loadApplication
+   * loadDetailData
    *
-   * Loads the current application by route identity.
+   * Loads the current application, reminders, and activity timeline data.
    */
-  const loadApplication = useCallback(async () => {
+  const loadDetailData = useCallback(async () => {
     if (!applicationId) {
-      setState({
+      setState((currentState) => ({
+        ...currentState,
         application: null,
         errorMessage: "Application id is missing from the route.",
-        isLoading: false,
-        isSubmittingStatus: false,
-        successMessage: null
-      });
+        isLoading: false
+      }));
       return;
     }
 
     const application = await getApplicationById(applicationId);
 
+    if (!application) {
+      setState((currentState) => ({
+        ...currentState,
+        application: null,
+        activityEvents: [],
+        errorMessage: null,
+        isLoading: false,
+        reminders: []
+      }));
+      return;
+    }
+
+    const [remindersResponse, activityResponse] = await Promise.all([
+      getReminders(applicationId),
+      getActivityEvents(applicationId)
+    ]);
+
     setState((currentState) => ({
       ...currentState,
+      activityEvents: activityResponse.activity_events,
       application,
       errorMessage: null,
-      isLoading: false
+      isLoading: false,
+      reminders: remindersResponse.reminders
     }));
   }, [applicationId]);
 
   useEffect(() => {
     let isCurrentRequest = true;
 
-    async function loadInitialApplication() {
+    async function loadInitialDetailData() {
       try {
         if (!applicationId) {
           throw new Error("missing application id");
@@ -94,11 +131,34 @@ export function ApplicationDetailPage() {
           return;
         }
 
+        if (!application) {
+          setState((currentState) => ({
+            ...currentState,
+            application: null,
+            activityEvents: [],
+            errorMessage: null,
+            isLoading: false,
+            reminders: []
+          }));
+          return;
+        }
+
+        const [remindersResponse, activityResponse] = await Promise.all([
+          getReminders(applicationId),
+          getActivityEvents(applicationId)
+        ]);
+
+        if (!isCurrentRequest) {
+          return;
+        }
+
         setState((currentState) => ({
           ...currentState,
+          activityEvents: activityResponse.activity_events,
           application,
           errorMessage: null,
-          isLoading: false
+          isLoading: false,
+          reminders: remindersResponse.reminders
         }));
       } catch {
         if (!isCurrentRequest) {
@@ -114,7 +174,7 @@ export function ApplicationDetailPage() {
       }
     }
 
-    void loadInitialApplication();
+    void loadInitialDetailData();
 
     return () => {
       isCurrentRequest = false;
@@ -139,22 +199,87 @@ export function ApplicationDetailPage() {
     }));
 
     try {
-      const updatedApplication = await updateApplicationStatus(applicationId, status);
+      await updateApplicationStatus(applicationId, status);
+      await loadDetailData();
 
       setState((currentState) => ({
         ...currentState,
-        application: updatedApplication,
-        errorMessage: null,
         isSubmittingStatus: false,
         successMessage: "Status updated."
       }));
-
-      await loadApplication();
     } catch {
       setState((currentState) => ({
         ...currentState,
         errorMessage: "Status could not be updated. Check the selected status and try again.",
         isSubmittingStatus: false,
+        successMessage: null
+      }));
+    }
+  }
+
+  /**
+   * handleScheduleReminder
+   *
+   * Schedules a reminder, refreshes detail data, and displays feedback.
+   */
+  async function handleScheduleReminder(values: CreateReminderFormValues) {
+    if (!applicationId) {
+      return;
+    }
+
+    setState((currentState) => ({
+      ...currentState,
+      errorMessage: null,
+      isSubmittingReminder: true,
+      successMessage: null
+    }));
+
+    try {
+      await scheduleReminder(applicationId, values);
+      await loadDetailData();
+
+      setState((currentState) => ({
+        ...currentState,
+        isSubmittingReminder: false,
+        successMessage: "Reminder scheduled."
+      }));
+    } catch {
+      setState((currentState) => ({
+        ...currentState,
+        errorMessage: "Reminder could not be scheduled. Check the form and try again.",
+        isSubmittingReminder: false,
+        successMessage: null
+      }));
+    }
+  }
+
+  /**
+   * handleCompleteReminder
+   *
+   * Completes a reminder, refreshes detail data, and displays feedback.
+   */
+  async function handleCompleteReminder(reminderId: string) {
+    setState((currentState) => ({
+      ...currentState,
+      errorMessage: null,
+      isCompletingReminder: true,
+      successMessage: null
+    }));
+
+    try {
+      await completeReminder(reminderId);
+      await loadDetailData();
+
+      setState((currentState) => ({
+        ...currentState,
+        isCompletingReminder: false,
+        successMessage: "Reminder completed."
+      }));
+    } catch {
+      setState((currentState) => ({
+        ...currentState,
+        errorMessage: "Reminder could not be completed. Try again.",
+        isCompletingReminder: false,
         successMessage: null
       }));
     }
@@ -237,6 +362,16 @@ export function ApplicationDetailPage() {
           isSubmitting={state.isSubmittingStatus}
           onSubmit={handleStatusUpdate}
         />
+
+        <ReminderForm isSubmitting={state.isSubmittingReminder} onSubmit={handleScheduleReminder} />
+
+        <ReminderList
+          isCompleting={state.isCompletingReminder}
+          onComplete={handleCompleteReminder}
+          reminders={state.reminders}
+        />
+
+        <ActivityTimeline events={state.activityEvents} />
       </section>
     </>
   );
