@@ -44,7 +44,7 @@ ApplyBy is designed to help an individual answer questions such as:
 
 ApplyBy is not intended to be a production SaaS platform in its first version.
 
-The first version will focus on a single-user job-search workflow with local or simple hosted persistence. External integrations such as email inbox sync, calendar sync, browser extensions, AI resume rewriting, and multi-user collaboration are future possibilities, not initial requirements.
+The first version focuses on a single-user job-search workflow with local or simple hosted persistence. Authentication, employer-facing workflows, file upload and file storage, calendar integrations, and production deployment wiring are future possibilities, not initial requirements.
 
 ## Selected Implementation Direction
 
@@ -71,28 +71,25 @@ The project is built in small, focused steps. Each step leaves the repository in
 | 5 | PostgreSQL persistence | Add relational schema, migrations, repositories, constraints, and integration tests for durable storage. | Complete |
 | 6 | Search and reminders | Add indexed search/filter behavior and reminder prioritization for performance-conscious job-search workflows. | Complete |
 | 7 | HTTP API | Expose backend workflows through thin request/response handlers without placing business rules in the API layer. | Complete |
-| 8 | Frontend foundation | Initialize the React and TypeScript frontend structure, route layout, API client boundary, and frontend test setup. | Next |
-| 9 | User interface | Add application tracking, detail, status, reminder, activity, search, and filtering views. | Planned |
-| 10 | Analytics and benchmarks | Add dashboard summaries, generated data, and benchmark coverage for search, reminders, analytics, and relationship traversal. | Planned |
-| 11 | Documentation and polish | Finalize setup instructions, architecture notes, ADRs, validation commands, and portfolio framing. | Planned |
+| 8 | Frontend foundation | Initialize the React and TypeScript frontend structure, route layout, API client boundary, and frontend test setup. | Complete |
+| 9 | User interface | Add application list, creation, detail, status, reminder, activity, contact, document metadata, search, filtering, and dashboard views. | Complete |
+| 10 | Analytics and benchmarks | Add generated data and benchmark coverage for search, reminders, analytics, and relationship traversal. | Planned |
+| 11 | Documentation and polish | Finalize setup instructions, architecture notes, ADRs, validation commands, and portfolio framing. | In progress |
 
 ## Status
 
-Initial repository setup and architecture decision records are complete.
+The current single-user version includes the Go backend API server, PostgreSQL persistence, React and TypeScript frontend, application workflows, reminders, contacts, document metadata, activity history, search/filtering, and a basic dashboard.
 
-The next implementation step is to begin the backend foundation in Go, starting with the core domain model and application lifecycle rules before adding persistence, API routes, or frontend behavior.
-
-
+Generated data, benchmark coverage, and expanded analytics validation remain planned.
 ## Future Plans
 
-The following areas are intentionally deferred beyond the current backend-first implementation:
+The following areas are intentionally deferred beyond the current single-user version:
 
 - Authentication and authorization
 - Employer-facing workflows
 - File upload and file storage
 - Calendar integrations
 - Production deployment wiring
-- Expanded analytics and benchmarks
 ## Documentation
 
 Planned documentation:

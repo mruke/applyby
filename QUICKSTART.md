@@ -1,28 +1,12 @@
 # Quickstart
 
-ApplyBy currently has a runnable Go backend test workflow and a Docker Compose PostgreSQL development database.
+ApplyBy currently has a runnable local full-stack workflow:
 
-The selected implementation direction is:
-
-- Go for the backend service
-- PostgreSQL for persistence
-- React for the frontend UI
-- TypeScript for frontend implementation
-- Layered testing with unit, integration, end-to-end, and helper test areas
-
-This document will be expanded as runnable implementation slices are added.
-
-## Planned Sections
-
-- Prerequisites
-- Backend setup
-- Database setup
-- Frontend setup
-- Development commands
-- Test commands
-- Benchmark commands
-- Generated files
-
+- Go backend API server
+- PostgreSQL development database
+- React frontend UI
+- TypeScript frontend implementation
+- Layered backend and frontend tests
 ## PostgreSQL Development Database
 
 ApplyBy uses Docker Compose to run PostgreSQL locally for development and integration tests.
@@ -68,7 +52,7 @@ Run frontend tests:
 npm test
 ```
 
-Run the frontend development server:
+Run the frontend development server without the backend API:
 
 ```powershell
 npm run dev
@@ -109,3 +93,26 @@ cd web
 $env:VITE_API_BASE_URL = "http://localhost:8080"
 npm run dev
 ```
+
+## Validation
+
+Run backend formatting and tests from the repository root:
+
+```
+powershell
+gofmt -w cmd internal
+go test ./...
+git diff --check
+```
+
+Run frontend tests and production build:
+
+```
+powershell
+cd web
+npm test
+npm run build
+cd ..
+```
+
+The current UI supports application creation, application search, application detail views, status updates, reminders, contacts, document metadata, activity history, and a basic dashboard overview.

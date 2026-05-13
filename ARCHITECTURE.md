@@ -151,7 +151,7 @@ ApplyBy is intended for one user managing their own job-search pipeline.
 
 ## 5. Container View
 
-ApplyBy is planned as four main containers.
+ApplyBy is organized around four main logical containers.
 
 ```text
 +-------------------+
@@ -469,8 +469,8 @@ Documentation should stay aligned with implementation state.
 
 ## 13. Summary
 
-ApplyBy will be built as a full-stack personal job application CRM using a Go backend, PostgreSQL persistence, React frontend, TypeScript frontend implementation, and layered testing.
+ApplyBy is built as a full-stack personal job application CRM using a Go backend, PostgreSQL persistence, React frontend, TypeScript frontend implementation, and layered testing.
 
 The project should demonstrate disciplined architecture and practical software engineering habits.
 
-The first implementation work should begin with backend domain modeling and lifecycle rules before adding persistence, API routes, or frontend behavior.
+The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow. Generated data and benchmark coverage remain planned.
