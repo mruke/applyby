@@ -254,3 +254,32 @@ textarea:focus-visible {
   background: #edf8ef;
   color: #236b32;
 }
+.detail-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.detail-list {
+  display: grid;
+  gap: 0.875rem;
+  margin: 0;
+}
+
+.detail-list div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.detail-list dt {
+  color: #4d5b78;
+  font-weight: 700;
+}
+
+.detail-list dd {
+  margin: 0;
+}
+
+.status-update-form {
+  display: grid;
+  gap: 1rem;
+}
