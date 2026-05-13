@@ -2,13 +2,14 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { createApplication, getApplications } from "../api/applications";
+import { createApplication, getApplications, searchApplications } from "../api/applications";
 import type { ApplicationsResponse } from "../types/application";
 import { ApplicationsPage } from "./ApplicationsPage";
 
 vi.mock("../api/applications", () => ({
   createApplication: vi.fn(),
-  getApplications: vi.fn()
+  getApplications: vi.fn(),
+  searchApplications: vi.fn()
 }));
 
 /**
@@ -24,6 +25,13 @@ const mockedCreateApplication = vi.mocked(createApplication);
  * Provides typed access to the mocked applications API function.
  */
 const mockedGetApplications = vi.mocked(getApplications);
+
+/**
+ * mockedSearchApplications
+ *
+ * Provides typed access to the mocked application search API function.
+ */
+const mockedSearchApplications = vi.mocked(searchApplications);
 
 /**
  * renderApplicationsPage
@@ -88,6 +96,7 @@ function fillCreateApplicationForm() {
 beforeEach(() => {
   mockedCreateApplication.mockReset();
   mockedGetApplications.mockReset();
+  mockedSearchApplications.mockReset();
 });
 
 describe("ApplicationsPage", () => {
@@ -172,5 +181,60 @@ describe("ApplicationsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add application" }));
 
     expect(await screen.findByRole("heading", { level: 2, name: "Applications need attention" })).toBeInTheDocument();
+  });
+
+  test("searches applications", async () => {
+    mockedGetApplications.mockResolvedValue(buildApplicationsResponse());
+    mockedSearchApplications.mockResolvedValue({
+      applications: [buildApplicationsResponse().applications[0]]
+    });
+
+    renderApplicationsPage();
+
+    expect(await screen.findByRole("link", { name: "Backend Developer" })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Text"), {
+      target: { value: "backend" }
+    });
+
+    fireEvent.change(screen.getAllByLabelText("Status")[1], {
+      target: { value: "applied" }
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+
+    await waitFor(() => {
+      expect(mockedSearchApplications).toHaveBeenCalledWith({
+        companyName: "",
+        source: "",
+        statuses: ["applied"],
+        text: "backend"
+      });
+    });
+
+    expect(await screen.findByText("Search filters are active.")).toBeInTheDocument();
+  });
+
+  test("clears application search", async () => {
+    mockedGetApplications.mockResolvedValue(buildApplicationsResponse());
+    mockedSearchApplications.mockResolvedValue({ applications: [] });
+
+    renderApplicationsPage();
+
+    expect(await screen.findByRole("link", { name: "Backend Developer" })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Text"), {
+      target: { value: "backend" }
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+
+    expect(await screen.findByRole("heading", { level: 2, name: "No matching applications" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear search" }));
+
+    await waitFor(() => {
+      expect(mockedGetApplications).toHaveBeenCalledTimes(2);
+    });
   });
 });

@@ -40,6 +40,18 @@ export type ApplicationsResponse = {
 };
 
 /**
+ * ApplicationSearchCriteria
+ *
+ * Represents the frontend criteria supported by the backend application search route.
+ */
+export type ApplicationSearchCriteria = {
+  companyName: string;
+  source: string;
+  text: string;
+  statuses: ApplicationStatus[];
+};
+
+/**
  * CreateApplicationFormValues
  *
  * Represents user-entered values from the create application form.

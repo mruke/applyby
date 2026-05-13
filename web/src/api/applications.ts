@@ -3,6 +3,7 @@ import { endpoints } from "./endpoints";
 import type {
   ApplicationResponse,
   ApplicationsResponse,
+  ApplicationSearchCriteria,
   ApplicationStatus,
   CreateApplicationFormValues,
   CreateApplicationRequest
@@ -41,6 +42,35 @@ function buildCreateApplicationRequest(values: CreateApplicationFormValues): Cre
 }
 
 /**
+ * buildSearchPath
+ *
+ * Converts frontend search criteria into the backend query-parameter contract.
+ */
+function buildSearchPath(criteria: ApplicationSearchCriteria): string {
+  const params = new URLSearchParams();
+
+  if (criteria.companyName.trim() !== "") {
+    params.set("company_name", criteria.companyName.trim());
+  }
+
+  if (criteria.source.trim() !== "") {
+    params.set("source", criteria.source.trim());
+  }
+
+  if (criteria.text.trim() !== "") {
+    params.set("text", criteria.text.trim());
+  }
+
+  for (const status of criteria.statuses) {
+    params.append("status", status);
+  }
+
+  const queryString = params.toString();
+
+  return queryString === "" ? endpoints.applicationSearch : `${endpoints.applicationSearch}?${queryString}`;
+}
+
+/**
  * getApplications
  *
  * Loads the current application collection from the backend API.
@@ -48,6 +78,15 @@ function buildCreateApplicationRequest(values: CreateApplicationFormValues): Cre
  */
 export async function getApplications(): Promise<ApplicationsResponse> {
   return apiClient.request<ApplicationsResponse>(endpoints.applications);
+}
+
+/**
+ * searchApplications
+ *
+ * Searches applications using the backend search query-parameter contract.
+ */
+export async function searchApplications(criteria: ApplicationSearchCriteria): Promise<ApplicationsResponse> {
+  return apiClient.request<ApplicationsResponse>(buildSearchPath(criteria));
 }
 
 /**

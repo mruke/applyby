@@ -1,38 +1,69 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { createApplication, getApplications } from "../api/applications";
+import { createApplication, getApplications, searchApplications } from "../api/applications";
 import { ApplicationForm } from "../components/ApplicationForm";
 import { ApplicationList } from "../components/ApplicationList";
+import { ApplicationSearchForm } from "../components/ApplicationSearchForm";
 import { EmptyState } from "../components/EmptyState";
 import { ErrorState } from "../components/ErrorState";
 import { LoadingState } from "../components/LoadingState";
-import type { ApplicationResponse, CreateApplicationFormValues } from "../types/application";
+import type { ApplicationResponse, ApplicationSearchCriteria, CreateApplicationFormValues } from "../types/application";
+
+/**
+ * emptySearchCriteria
+ *
+ * Provides default criteria for an unfiltered applications list.
+ */
+const emptySearchCriteria: ApplicationSearchCriteria = {
+  companyName: "",
+  source: "",
+  statuses: [],
+  text: ""
+};
 
 /**
  * ApplicationsPageState
  *
- * Represents the frontend state for loading, displaying, and creating applications.
+ * Represents the frontend state for loading, displaying, searching, and creating applications.
  */
 type ApplicationsPageState = {
   applications: ApplicationResponse[];
   errorMessage: string | null;
   isLoading: boolean;
+  isSearching: boolean;
   isSubmitting: boolean;
+  searchCriteria: ApplicationSearchCriteria;
   successMessage: string | null;
 };
 
 /**
+ * hasActiveSearchCriteria
+ *
+ * Reports whether any application search criteria are active.
+ */
+function hasActiveSearchCriteria(criteria: ApplicationSearchCriteria): boolean {
+  return (
+    criteria.companyName.trim() !== "" ||
+    criteria.source.trim() !== "" ||
+    criteria.text.trim() !== "" ||
+    criteria.statuses.length > 0
+  );
+}
+
+/**
  * ApplicationsPage
  *
- * Loads tracked applications and provides the first frontend write workflow
- * for creating a new application through the backend API.
+ * Loads tracked applications and provides frontend workflows for creating,
+ * searching, filtering, and clearing the applications list.
  */
 export function ApplicationsPage() {
   const [state, setState] = useState<ApplicationsPageState>({
     applications: [],
     errorMessage: null,
     isLoading: true,
+    isSearching: false,
     isSubmitting: false,
+    searchCriteria: emptySearchCriteria,
     successMessage: null
   });
 
@@ -48,7 +79,9 @@ export function ApplicationsPage() {
       ...currentState,
       applications: response.applications,
       errorMessage: null,
-      isLoading: false
+      isLoading: false,
+      isSearching: false,
+      searchCriteria: emptySearchCriteria
     }));
   }, []);
 
@@ -122,6 +155,67 @@ export function ApplicationsPage() {
     }
   }
 
+  /**
+   * handleSearchApplications
+   *
+   * Runs application search and exposes the active criteria in page state.
+   */
+  async function handleSearchApplications(criteria: ApplicationSearchCriteria) {
+    setState((currentState) => ({
+      ...currentState,
+      errorMessage: null,
+      isSearching: true,
+      searchCriteria: criteria,
+      successMessage: null
+    }));
+
+    try {
+      const response = await searchApplications(criteria);
+
+      setState((currentState) => ({
+        ...currentState,
+        applications: response.applications,
+        errorMessage: null,
+        isLoading: false,
+        isSearching: false,
+        searchCriteria: criteria
+      }));
+    } catch {
+      setState((currentState) => ({
+        ...currentState,
+        applications: [],
+        errorMessage: "Applications could not be searched. Check the filters and try again.",
+        isSearching: false
+      }));
+    }
+  }
+
+  /**
+   * handleClearSearch
+   *
+   * Clears active search criteria and reloads all applications.
+   */
+  async function handleClearSearch() {
+    setState((currentState) => ({
+      ...currentState,
+      errorMessage: null,
+      isSearching: true,
+      searchCriteria: emptySearchCriteria,
+      successMessage: null
+    }));
+
+    try {
+      await loadApplications();
+    } catch {
+      setState((currentState) => ({
+        ...currentState,
+        applications: [],
+        errorMessage: "Applications could not be loaded. Check that the backend is running and try again.",
+        isSearching: false
+      }));
+    }
+  }
+
   return (
     <>
       <header className="page-header">
@@ -130,6 +224,19 @@ export function ApplicationsPage() {
       </header>
 
       <ApplicationForm isSubmitting={state.isSubmitting} onSubmit={handleCreateApplication} />
+
+      <ApplicationSearchForm
+        criteria={state.searchCriteria}
+        isSearching={state.isSearching}
+        onClear={handleClearSearch}
+        onSearch={handleSearchApplications}
+      />
+
+      {hasActiveSearchCriteria(state.searchCriteria) ? (
+        <p className="active-filter-summary" role="status">
+          Search filters are active.
+        </p>
+      ) : null}
 
       {state.successMessage ? (
         <p className="form-message form-message--success" role="status">
@@ -143,8 +250,12 @@ export function ApplicationsPage() {
         <ErrorState title="Applications need attention" message={state.errorMessage} />
       ) : state.applications.length === 0 ? (
         <EmptyState
-          title="No applications yet"
-          message="Add your first application to start tracking your job search."
+          title={hasActiveSearchCriteria(state.searchCriteria) ? "No matching applications" : "No applications yet"}
+          message={
+            hasActiveSearchCriteria(state.searchCriteria)
+              ? "Try changing or clearing the search filters."
+              : "Add your first application to start tracking your job search."
+          }
         />
       ) : (
         <ApplicationList applications={state.applications} />
