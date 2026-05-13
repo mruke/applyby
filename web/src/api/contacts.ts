@@ -1,20 +1,7 @@
 import { apiClient } from "./client";
 import { endpoints } from "./endpoints";
 import type { ContactResponse, ContactsResponse, CreateContactFormValues, CreateContactRequest } from "../types/application";
-
-/**
- * createContactId
- *
- * Creates a client-side contact identity for the backend add contact workflow.
- * The fallback exists for browsers or tests that do not expose crypto.randomUUID.
- */
-function createContactId(): string {
-  if (globalThis.crypto && "randomUUID" in globalThis.crypto) {
-    return globalThis.crypto.randomUUID();
-  }
-
-  return `contact-${Date.now()}`;
-}
+import { createClientId } from "../utils/clientIds";
 
 /**
  * buildCreateContactRequest
@@ -23,7 +10,7 @@ function createContactId(): string {
  */
 function buildCreateContactRequest(values: CreateContactFormValues): CreateContactRequest {
   return {
-    id: createContactId(),
+    id: createClientId("contact"),
     name: values.name.trim(),
     email: values.email.trim(),
     role: values.role.trim()

@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from "react";
 
+import { applicationStatusOptions } from "../constants/applicationStatuses";
 import type { ApplicationStatus, CreateApplicationFormValues } from "../types/application";
 
 /**
@@ -32,22 +33,6 @@ const initialFormState: ApplicationFormState = {
   source: "",
   notes: ""
 };
-
-/**
- * applicationStatuses
- *
- * Provides the status options exposed by the create application form.
- */
-const applicationStatuses: { value: ApplicationStatus; label: string }[] = [
-  { value: "draft", label: "Draft" },
-  { value: "interested", label: "Interested" },
-  { value: "applied", label: "Applied" },
-  { value: "interviewing", label: "Interviewing" },
-  { value: "offer", label: "Offer" },
-  { value: "rejected", label: "Rejected" },
-  { value: "withdrawn", label: "Withdrawn" },
-  { value: "archived", label: "Archived" }
-];
 
 /**
  * ApplicationForm
@@ -146,7 +131,7 @@ export function ApplicationForm({ isSubmitting, onSubmit }: ApplicationFormProps
             value={values.status}
             onChange={(event) => updateValue("status", event.target.value as ApplicationStatus)}
           >
-            {applicationStatuses.map((status) => (
+            {applicationStatusOptions.map((status) => (
               <option key={status.value} value={status.value}>
                 {status.label}
               </option>

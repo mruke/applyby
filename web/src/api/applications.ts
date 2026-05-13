@@ -8,20 +8,7 @@ import type {
   CreateApplicationFormValues,
   CreateApplicationRequest
 } from "../types/application";
-
-/**
- * createApplicationId
- *
- * Creates a client-side application identity for the backend create workflow.
- * The fallback exists for browsers or tests that do not expose crypto.randomUUID.
- */
-function createApplicationId(): string {
-  if (globalThis.crypto && "randomUUID" in globalThis.crypto) {
-    return globalThis.crypto.randomUUID();
-  }
-
-  return `app-${Date.now()}`;
-}
+import { createClientId } from "../utils/clientIds";
 
 /**
  * buildCreateApplicationRequest
@@ -30,7 +17,7 @@ function createApplicationId(): string {
  */
 function buildCreateApplicationRequest(values: CreateApplicationFormValues): CreateApplicationRequest {
   return {
-    id: createApplicationId(),
+    id: createClientId("app"),
     title: values.title.trim(),
     company_name: values.companyName.trim(),
     company_website: values.companyWebsite.trim(),

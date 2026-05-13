@@ -29,6 +29,7 @@ import type {
   DocumentResponse,
   ReminderResponse
 } from "../types/application";
+import { formatLongDate } from "../utils/dateFormatting";
 
 /**
  * ApplicationDetailPageState
@@ -52,16 +53,59 @@ type ApplicationDetailPageState = {
 };
 
 /**
- * formatDate
+ * ApplicationDetailData
  *
- * Converts an API timestamp into a readable date label for detail display.
+ * Represents the data needed to render the application detail page.
  */
-function formatDate(timestamp: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    year: "numeric",
-    month: "long",
-    day: "numeric"
-  }).format(new Date(timestamp));
+type ApplicationDetailData = {
+  activityEvents: ActivityEventResponse[];
+  application: ApplicationResponse | null;
+  contacts: ContactResponse[];
+  documents: DocumentResponse[];
+  reminders: ReminderResponse[];
+};
+
+/**
+ * emptyApplicationDetailData
+ *
+ * Provides empty detail data for a missing application.
+ */
+function emptyApplicationDetailData(): ApplicationDetailData {
+  return {
+    activityEvents: [],
+    application: null,
+    contacts: [],
+    documents: [],
+    reminders: []
+  };
+}
+
+/**
+ * fetchApplicationDetailData
+ *
+ * Loads one application and its related detail resources.
+ */
+async function fetchApplicationDetailData(applicationId: string): Promise<ApplicationDetailData> {
+  const application = await getApplicationById(applicationId);
+
+  if (!application) {
+    return emptyApplicationDetailData();
+  }
+
+  const [remindersResponse, activityResponse, contactsResponse, documentsResponse] = await Promise.all([
+    getReminders(applicationId),
+    getActivityEvents(applicationId),
+    getContacts(applicationId),
+    getDocuments(applicationId)
+  ]);
+
+  return {
+    activityEvents: activityResponse.activity_events,
+    application,
+    contacts: contactsResponse.contacts,
+    documents: documentsResponse.documents,
+    reminders: remindersResponse.reminders
+  };
 }
 
 /**
@@ -92,7 +136,7 @@ export function ApplicationDetailPage() {
   /**
    * loadDetailData
    *
-   * Loads the current application, reminders, contacts, documents, and activity timeline data.
+   * Loads current detail data and applies it to page state.
    */
   const loadDetailData = useCallback(async () => {
     if (!applicationId) {
@@ -105,38 +149,17 @@ export function ApplicationDetailPage() {
       return;
     }
 
-    const application = await getApplicationById(applicationId);
-
-    if (!application) {
-      setState((currentState) => ({
-        ...currentState,
-        activityEvents: [],
-        application: null,
-        contacts: [],
-        documents: [],
-        errorMessage: null,
-        isLoading: false,
-        reminders: []
-      }));
-      return;
-    }
-
-    const [remindersResponse, activityResponse, contactsResponse, documentsResponse] = await Promise.all([
-      getReminders(applicationId),
-      getActivityEvents(applicationId),
-      getContacts(applicationId),
-      getDocuments(applicationId)
-    ]);
+    const detailData = await fetchApplicationDetailData(applicationId);
 
     setState((currentState) => ({
       ...currentState,
-      activityEvents: activityResponse.activity_events,
-      application,
-      contacts: contactsResponse.contacts,
-      documents: documentsResponse.documents,
+      activityEvents: detailData.activityEvents,
+      application: detailData.application,
+      contacts: detailData.contacts,
+      documents: detailData.documents,
       errorMessage: null,
       isLoading: false,
-      reminders: remindersResponse.reminders
+      reminders: detailData.reminders
     }));
   }, [applicationId]);
 
@@ -149,32 +172,7 @@ export function ApplicationDetailPage() {
           throw new Error("missing application id");
         }
 
-        const application = await getApplicationById(applicationId);
-
-        if (!isCurrentRequest) {
-          return;
-        }
-
-        if (!application) {
-          setState((currentState) => ({
-            ...currentState,
-            activityEvents: [],
-            application: null,
-            contacts: [],
-            documents: [],
-            errorMessage: null,
-            isLoading: false,
-            reminders: []
-          }));
-          return;
-        }
-
-        const [remindersResponse, activityResponse, contactsResponse, documentsResponse] = await Promise.all([
-          getReminders(applicationId),
-          getActivityEvents(applicationId),
-          getContacts(applicationId),
-          getDocuments(applicationId)
-        ]);
+        const detailData = await fetchApplicationDetailData(applicationId);
 
         if (!isCurrentRequest) {
           return;
@@ -182,13 +180,13 @@ export function ApplicationDetailPage() {
 
         setState((currentState) => ({
           ...currentState,
-          activityEvents: activityResponse.activity_events,
-          application,
-          contacts: contactsResponse.contacts,
-          documents: documentsResponse.documents,
+          activityEvents: detailData.activityEvents,
+          application: detailData.application,
+          contacts: detailData.contacts,
+          documents: detailData.documents,
           errorMessage: null,
           isLoading: false,
-          reminders: remindersResponse.reminders
+          reminders: detailData.reminders
         }));
       } catch {
         if (!isCurrentRequest) {
@@ -450,7 +448,7 @@ export function ApplicationDetailPage() {
             </div>
             <div>
               <dt>Created</dt>
-              <dd>{formatDate(state.application.created_at)}</dd>
+              <dd>{formatLongDate(state.application.created_at)}</dd>
             </div>
             <div>
               <dt>Notes</dt>

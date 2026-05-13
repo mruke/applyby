@@ -1,4 +1,5 @@
 import type { ReminderResponse } from "../types/application";
+import { formatDateTime } from "../utils/dateFormatting";
 
 /**
  * ReminderListProps
@@ -10,21 +11,6 @@ type ReminderListProps = {
   onComplete: (reminderId: string) => Promise<void>;
   reminders: ReminderResponse[];
 };
-
-/**
- * formatDateTime
- *
- * Converts an API timestamp into a readable reminder date and time label.
- */
-function formatDateTime(timestamp: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
-  }).format(new Date(timestamp));
-}
 
 /**
  * ReminderList

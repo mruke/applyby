@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import type { ApplicationResponse } from "../types/application";
+import { formatShortDate } from "../utils/dateFormatting";
 import { StatusBadge } from "./StatusBadge";
 
 /**
@@ -11,19 +12,6 @@ import { StatusBadge } from "./StatusBadge";
 type ApplicationListProps = {
   applications: ApplicationResponse[];
 };
-
-/**
- * formatDate
- *
- * Converts an API timestamp into a readable date label for list display.
- */
-function formatDate(timestamp: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  }).format(new Date(timestamp));
-}
 
 /**
  * ApplicationList
@@ -62,7 +50,7 @@ export function ApplicationList({ applications }: ApplicationListProps) {
                   <StatusBadge status={application.status} />
                 </td>
                 <td>{application.source || "Not specified"}</td>
-                <td>{formatDate(application.created_at)}</td>
+                <td>{formatShortDate(application.created_at)}</td>
               </tr>
             ))}
           </tbody>

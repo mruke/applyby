@@ -1,4 +1,5 @@
 import type { ActivityEventResponse } from "../types/application";
+import { formatDateTime } from "../utils/dateFormatting";
 
 /**
  * ActivityTimelineProps
@@ -8,21 +9,6 @@ import type { ActivityEventResponse } from "../types/application";
 type ActivityTimelineProps = {
   events: ActivityEventResponse[];
 };
-
-/**
- * formatDateTime
- *
- * Converts an API timestamp into a readable activity event date and time label.
- */
-function formatDateTime(timestamp: string): string {
-  return new Intl.DateTimeFormat(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
-  }).format(new Date(timestamp));
-}
 
 /**
  * ActivityTimeline
