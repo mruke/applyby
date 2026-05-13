@@ -60,7 +60,7 @@ These decisions are recorded in `docs/adr/`.
 
 ## Implementation Steps
 
-The project is built in small, focused steps. Each step leaves the repository in a working state and adds one clear piece of functionality.
+The project is planned as a sequence of focused implementation steps.
 
 | Step | Focus Area | Goal | Status |
 |---|---|---|---|
@@ -75,6 +75,23 @@ The project is built in small, focused steps. Each step leaves the repository in
 | 9 | User interface | Add application list, creation, detail, status, reminder, activity, contact, document metadata, search, filtering, and dashboard views. | Complete |
 | 10 | Analytics and benchmarks | Add generated data and benchmark coverage for search, reminders, analytics, and relationship traversal. | Planned |
 | 11 | Documentation and polish | Finalize setup instructions, architecture notes, ADRs, validation commands, and portfolio framing. | In progress |
+| 12 | Application detail editing | Add non-status application detail editing for title, company, website, source, and notes. Keep lifecycle status updates separate. | Planned |
+| 13 | Contact maintenance workflows | Add contact editing and removal workflows. | Planned |
+| 14 | Document metadata maintenance workflows | Add document metadata editing and removal workflows. File upload/storage remains deferred. | Planned |
+| 15 | Reminder maintenance workflows | Add reminder editing and canceling workflows. Keep reminder completion as a separate workflow. | Planned |
+| 16 | Application removal policy | Prefer archive/status workflow first and defer hard delete because it affects reminders, contacts, documents, and activity history. | Deferred |
+
+## Current CRUD Coverage
+
+ApplyBy currently supports the core local CRM workflow, but it is not yet full CRUD for every record type.
+
+| Area | Create | Read | Update | Delete / Remove | Current gap |
+|---|---:|---:|---:|---:|---|
+| Applications | Yes | Yes | Partial | Partial | Details can be created/read; status can be updated; general detail editing is planned. Archiving is available through status. Hard delete is deferred. |
+| Reminders | Yes | Yes | Partial | No | Reminders can be scheduled/read/completed; editing and canceling are planned. |
+| Contacts | Yes | Yes | No | No | Contacts can be added/read; editing and removal are planned. |
+| Document metadata | Yes | Yes | No | No | Document metadata can be added/read; editing and removal are planned. |
+| Activity history | System-generated | Yes | No | No | Activity is append-only by design. |
 
 ## Status
 
@@ -105,3 +122,4 @@ ChatGPT was used during development as a learning, design, and review assistant.
 ## License
 
 This project is licensed under the MIT License.
+
