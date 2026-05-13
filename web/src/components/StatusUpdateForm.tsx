@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from "react";
 
+import { applicationStatusOptions } from "../constants/applicationStatuses";
 import type { ApplicationStatus } from "../types/application";
 
 /**
@@ -12,22 +13,6 @@ type StatusUpdateFormProps = {
   isSubmitting: boolean;
   onSubmit: (status: ApplicationStatus) => Promise<void>;
 };
-
-/**
- * statusOptions
- *
- * Provides readable status options supported by the backend lifecycle.
- */
-const statusOptions: { value: ApplicationStatus; label: string }[] = [
-  { value: "draft", label: "Draft" },
-  { value: "interested", label: "Interested" },
-  { value: "applied", label: "Applied" },
-  { value: "interviewing", label: "Interviewing" },
-  { value: "offer", label: "Offer" },
-  { value: "rejected", label: "Rejected" },
-  { value: "withdrawn", label: "Withdrawn" },
-  { value: "archived", label: "Archived" }
-];
 
 /**
  * StatusUpdateForm
@@ -61,7 +46,7 @@ export function StatusUpdateForm({ currentStatus, isSubmitting, onSubmit }: Stat
             value={selectedStatus}
             onChange={(event) => setSelectedStatus(event.target.value as ApplicationStatus)}
           >
-            {statusOptions.map((status) => (
+            {applicationStatusOptions.map((status) => (
               <option key={status.value} value={status.value}>
                 {status.label}
               </option>

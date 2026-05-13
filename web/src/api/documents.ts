@@ -6,20 +6,7 @@ import type {
   DocumentResponse,
   DocumentsResponse
 } from "../types/application";
-
-/**
- * createDocumentId
- *
- * Creates a client-side document identity for the backend add document metadata workflow.
- * The fallback exists for browsers or tests that do not expose crypto.randomUUID.
- */
-function createDocumentId(): string {
-  if (globalThis.crypto && "randomUUID" in globalThis.crypto) {
-    return globalThis.crypto.randomUUID();
-  }
-
-  return `document-${Date.now()}`;
-}
+import { createClientId } from "../utils/clientIds";
 
 /**
  * buildCreateDocumentRequest
@@ -28,7 +15,7 @@ function createDocumentId(): string {
  */
 function buildCreateDocumentRequest(values: CreateDocumentFormValues): CreateDocumentRequest {
   return {
-    id: createDocumentId(),
+    id: createClientId("document"),
     name: values.name.trim(),
     kind: values.kind.trim(),
     path: values.path.trim()

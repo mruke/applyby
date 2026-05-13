@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from "react";
 
+import { applicationSearchStatusOptions } from "../constants/applicationStatuses";
 import type { ApplicationSearchCriteria, ApplicationStatus } from "../types/application";
 
 /**
@@ -25,23 +26,6 @@ type SearchFormState = {
   status: "" | ApplicationStatus;
   text: string;
 };
-
-/**
- * statusOptions
- *
- * Provides readable status options supported by application search.
- */
-const statusOptions: { value: "" | ApplicationStatus; label: string }[] = [
-  { value: "", label: "Any status" },
-  { value: "draft", label: "Draft" },
-  { value: "interested", label: "Interested" },
-  { value: "applied", label: "Applied" },
-  { value: "interviewing", label: "Interviewing" },
-  { value: "offer", label: "Offer" },
-  { value: "rejected", label: "Rejected" },
-  { value: "withdrawn", label: "Withdrawn" },
-  { value: "archived", label: "Archived" }
-];
 
 /**
  * formStateFromCriteria
@@ -158,7 +142,7 @@ export function ApplicationSearchForm({ criteria, isSearching, onClear, onSearch
             value={values.status}
             onChange={(event) => updateValue("status", event.target.value as "" | ApplicationStatus)}
           >
-            {statusOptions.map((status) => (
+            {applicationSearchStatusOptions.map((status) => (
               <option key={status.value || "any"} value={status.value}>
                 {status.label}
               </option>

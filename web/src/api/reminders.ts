@@ -6,20 +6,7 @@ import type {
   ReminderResponse,
   RemindersResponse
 } from "../types/application";
-
-/**
- * createReminderId
- *
- * Creates a client-side reminder identity for the backend schedule reminder workflow.
- * The fallback exists for browsers or tests that do not expose crypto.randomUUID.
- */
-function createReminderId(): string {
-  if (globalThis.crypto && "randomUUID" in globalThis.crypto) {
-    return globalThis.crypto.randomUUID();
-  }
-
-  return `reminder-${Date.now()}`;
-}
+import { createClientId } from "../utils/clientIds";
 
 /**
  * buildCreateReminderRequest
@@ -28,7 +15,7 @@ function createReminderId(): string {
  */
 function buildCreateReminderRequest(values: CreateReminderFormValues): CreateReminderRequest {
   return {
-    id: createReminderId(),
+    id: createClientId("reminder"),
     title: values.title.trim(),
     due_at: new Date(values.dueAt).toISOString()
   };
