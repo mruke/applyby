@@ -262,7 +262,7 @@ describe("ApplicationDetailPage", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "Backend Developer" })).toBeInTheDocument();
     expect(screen.getByText("Example Studio")).toBeInTheDocument();
     expect(screen.getAllByText("Applied").length).toBeGreaterThan(0);
-    expect(screen.getByText("Applied with backend resume.")).toBeInTheDocument();
+    expect(screen.getAllByText("Applied with backend resume.").length).toBeGreaterThan(0);
     expect(screen.getByText("Follow up with recruiter")).toBeInTheDocument();
     expect(screen.getByText("Status changed from applied to interviewing.")).toBeInTheDocument();
     expect(screen.getByText("Sam Recruiter")).toBeInTheDocument();

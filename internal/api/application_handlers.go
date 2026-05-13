@@ -39,6 +39,15 @@ type getApplicationExecutor interface {
 }
 
 // -----------------------------------------------------------------------------
+// updateApplicationDetailsExecutor
+//
+// Defines the application behavior needed by the update details handler.
+// -----------------------------------------------------------------------------
+type updateApplicationDetailsExecutor interface {
+	Execute(ctx context.Context, input application.UpdateApplicationDetailsInput) (domain.Application, error)
+}
+
+// -----------------------------------------------------------------------------
 // updateApplicationStatusExecutor
 //
 // Defines the application behavior needed by the update status handler.
@@ -53,10 +62,11 @@ type updateApplicationStatusExecutor interface {
 // Groups HTTP handlers for application-related API workflows.
 // -----------------------------------------------------------------------------
 type ApplicationHandlers struct {
-	createApplication       createApplicationExecutor
-	listApplications        listApplicationsExecutor
-	getApplication          getApplicationExecutor
-	updateApplicationStatus updateApplicationStatusExecutor
+	createApplication        createApplicationExecutor
+	listApplications         listApplicationsExecutor
+	getApplication           getApplicationExecutor
+	updateApplicationDetails updateApplicationDetailsExecutor
+	updateApplicationStatus  updateApplicationStatusExecutor
 }
 
 // -----------------------------------------------------------------------------
@@ -68,13 +78,15 @@ func NewApplicationHandlers(
 	createApplication createApplicationExecutor,
 	listApplications listApplicationsExecutor,
 	getApplication getApplicationExecutor,
+	updateApplicationDetails updateApplicationDetailsExecutor,
 	updateApplicationStatus updateApplicationStatusExecutor,
 ) ApplicationHandlers {
 	return ApplicationHandlers{
-		createApplication:       createApplication,
-		listApplications:        listApplications,
-		getApplication:          getApplication,
-		updateApplicationStatus: updateApplicationStatus,
+		createApplication:        createApplication,
+		listApplications:         listApplications,
+		getApplication:           getApplication,
+		updateApplicationDetails: updateApplicationDetails,
+		updateApplicationStatus:  updateApplicationStatus,
 	}
 }
 
@@ -110,13 +122,18 @@ func (handlers ApplicationHandlers) HandleApplicationResource(response http.Resp
 
 		handlers.handleGetApplication(response, request, id)
 	case http.MethodPatch:
-		id, ok := applicationIDFromStatusPath(request.URL.Path)
+		if id, ok := applicationIDFromStatusPath(request.URL.Path); ok {
+			handlers.handleUpdateApplicationStatus(response, request, id)
+			return
+		}
+
+		id, ok := applicationIDFromDetailPath(request.URL.Path)
 		if !ok {
 			writeJSON(response, http.StatusNotFound, errorResponse{Error: "route not found"})
 			return
 		}
 
-		handlers.handleUpdateApplicationStatus(response, request, id)
+		handlers.handleUpdateApplicationDetails(response, request, id)
 	default:
 		writeJSON(response, http.StatusMethodNotAllowed, errorResponse{Error: "method not allowed"})
 	}
@@ -215,6 +232,33 @@ func (handlers ApplicationHandlers) handleGetApplication(response http.ResponseW
 	}
 
 	writeJSON(response, http.StatusOK, applicationToResponse(foundApplication))
+}
+
+// -----------------------------------------------------------------------------
+// handleUpdateApplicationDetails
+//
+// Decodes, validates, and executes the update application details workflow.
+// -----------------------------------------------------------------------------
+func (handlers ApplicationHandlers) handleUpdateApplicationDetails(response http.ResponseWriter, request *http.Request, id domain.ApplicationID) {
+	if handlers.updateApplicationDetails == nil {
+		writeJSON(response, http.StatusInternalServerError, errorResponse{Error: "update application details service is not configured"})
+		return
+	}
+
+	var body updateApplicationDetailsRequest
+
+	if err := decodeJSON(request, &body); err != nil {
+		writeJSON(response, http.StatusBadRequest, errorResponse{Error: err.Error()})
+		return
+	}
+
+	updatedApplication, err := handlers.updateApplicationDetails.Execute(request.Context(), body.toInput(id))
+	if err != nil {
+		writeJSON(response, http.StatusBadRequest, errorResponse{Error: err.Error()})
+		return
+	}
+
+	writeJSON(response, http.StatusOK, applicationToResponse(updatedApplication))
 }
 
 // -----------------------------------------------------------------------------

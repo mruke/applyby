@@ -12,7 +12,7 @@ import (
 // Verifies that the router sends collection requests to the application handler.
 // -----------------------------------------------------------------------------
 func TestNewRouterRoutesApplicationsCollection(t *testing.T) {
-	router := NewRouter(NewApplicationHandlers(nil, nil, nil, nil))
+	router := NewRouter(NewApplicationHandlers(nil, nil, nil, nil, nil))
 
 	request := httptest.NewRequest(http.MethodGet, "/applications", nil)
 	response := httptest.NewRecorder()
@@ -30,7 +30,7 @@ func TestNewRouterRoutesApplicationsCollection(t *testing.T) {
 // Verifies that the router sends detail requests to the application resource handler.
 // -----------------------------------------------------------------------------
 func TestNewRouterRoutesApplicationDetail(t *testing.T) {
-	router := NewRouter(NewApplicationHandlers(nil, nil, nil, nil))
+	router := NewRouter(NewApplicationHandlers(nil, nil, nil, nil, nil))
 
 	request := httptest.NewRequest(http.MethodGet, "/applications/app-001", nil)
 	response := httptest.NewRecorder()
@@ -48,7 +48,7 @@ func TestNewRouterRoutesApplicationDetail(t *testing.T) {
 // Verifies that the router sends status update requests to the status handler.
 // -----------------------------------------------------------------------------
 func TestNewRouterRoutesApplicationStatus(t *testing.T) {
-	router := NewRouter(NewApplicationHandlers(nil, nil, nil, nil))
+	router := NewRouter(NewApplicationHandlers(nil, nil, nil, nil, nil))
 
 	request := httptest.NewRequest(http.MethodPatch, "/applications/app-001/status", nil)
 	response := httptest.NewRecorder()

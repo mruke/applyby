@@ -126,7 +126,7 @@ func (executor *fakeUpdateApplicationStatusExecutor) Execute(ctx context.Context
 func TestHandleApplicationsCreatesApplication(t *testing.T) {
 	createdApplication := newAPIHandlerTestApplication(t, "app-001", domain.StatusApplied)
 	createExecutor := &fakeCreateApplicationExecutor{application: createdApplication}
-	handlers := NewApplicationHandlers(createExecutor, nil, nil, nil)
+	handlers := NewApplicationHandlers(createExecutor, nil, nil, nil, nil)
 
 	requestBody := `{
         "id": "app-001",
@@ -159,7 +159,7 @@ func TestHandleApplicationsCreatesApplication(t *testing.T) {
 // Verifies that POST /applications rejects invalid JSON.
 // -----------------------------------------------------------------------------
 func TestHandleApplicationsRejectsInvalidCreateJSON(t *testing.T) {
-	handlers := NewApplicationHandlers(&fakeCreateApplicationExecutor{}, nil, nil, nil)
+	handlers := NewApplicationHandlers(&fakeCreateApplicationExecutor{}, nil, nil, nil, nil)
 	request := httptest.NewRequest(http.MethodPost, "/applications", bytes.NewBufferString("{"))
 	response := httptest.NewRecorder()
 
@@ -178,7 +178,7 @@ func TestHandleApplicationsRejectsInvalidCreateJSON(t *testing.T) {
 func TestHandleApplicationsListsApplications(t *testing.T) {
 	application := newAPIHandlerTestApplication(t, "app-001", domain.StatusApplied)
 	listExecutor := &fakeListApplicationsExecutor{applications: []domain.Application{application}}
-	handlers := NewApplicationHandlers(nil, listExecutor, nil, nil)
+	handlers := NewApplicationHandlers(nil, listExecutor, nil, nil, nil)
 
 	request := httptest.NewRequest(http.MethodGet, "/applications", nil)
 	response := httptest.NewRecorder()
@@ -200,7 +200,7 @@ func TestHandleApplicationsListsApplications(t *testing.T) {
 // Verifies that collection handler rejects unsupported HTTP methods.
 // -----------------------------------------------------------------------------
 func TestHandleApplicationsRejectsUnsupportedMethod(t *testing.T) {
-	handlers := NewApplicationHandlers(nil, nil, nil, nil)
+	handlers := NewApplicationHandlers(nil, nil, nil, nil, nil)
 	request := httptest.NewRequest(http.MethodDelete, "/applications", nil)
 	response := httptest.NewRecorder()
 
@@ -219,7 +219,7 @@ func TestHandleApplicationsRejectsUnsupportedMethod(t *testing.T) {
 func TestHandleApplicationResourceGetsApplication(t *testing.T) {
 	application := newAPIHandlerTestApplication(t, "app-001", domain.StatusApplied)
 	getExecutor := &fakeGetApplicationExecutor{application: application}
-	handlers := NewApplicationHandlers(nil, nil, getExecutor, nil)
+	handlers := NewApplicationHandlers(nil, nil, getExecutor, nil, nil)
 
 	request := httptest.NewRequest(http.MethodGet, "/applications/app-001", nil)
 	response := httptest.NewRecorder()
@@ -242,7 +242,7 @@ func TestHandleApplicationResourceGetsApplication(t *testing.T) {
 // -----------------------------------------------------------------------------
 func TestHandleApplicationResourceReturnsNotFoundForMissingApplication(t *testing.T) {
 	getExecutor := &fakeGetApplicationExecutor{err: errors.New("application not found")}
-	handlers := NewApplicationHandlers(nil, nil, getExecutor, nil)
+	handlers := NewApplicationHandlers(nil, nil, getExecutor, nil, nil)
 
 	request := httptest.NewRequest(http.MethodGet, "/applications/app-001", nil)
 	response := httptest.NewRecorder()
@@ -262,7 +262,7 @@ func TestHandleApplicationResourceReturnsNotFoundForMissingApplication(t *testin
 func TestHandleApplicationStatusUpdatesStatus(t *testing.T) {
 	updatedApplication := newAPIHandlerTestApplication(t, "app-001", domain.StatusInterviewing)
 	updateExecutor := &fakeUpdateApplicationStatusExecutor{application: updatedApplication}
-	handlers := NewApplicationHandlers(nil, nil, nil, updateExecutor)
+	handlers := NewApplicationHandlers(nil, nil, nil, nil, updateExecutor)
 
 	request := httptest.NewRequest(http.MethodPatch, "/applications/app-001/status", strings.NewReader(`{"status":"interviewing"}`))
 	response := httptest.NewRecorder()
@@ -284,7 +284,7 @@ func TestHandleApplicationStatusUpdatesStatus(t *testing.T) {
 // Verifies that invalid status update paths return not found.
 // -----------------------------------------------------------------------------
 func TestHandleApplicationStatusRejectsInvalidRoute(t *testing.T) {
-	handlers := NewApplicationHandlers(nil, nil, nil, &fakeUpdateApplicationStatusExecutor{})
+	handlers := NewApplicationHandlers(nil, nil, nil, nil, &fakeUpdateApplicationStatusExecutor{})
 
 	request := httptest.NewRequest(http.MethodPatch, "/applications/app-001", strings.NewReader(`{"status":"interviewing"}`))
 	response := httptest.NewRecorder()
@@ -303,7 +303,7 @@ func TestHandleApplicationStatusRejectsInvalidRoute(t *testing.T) {
 // -----------------------------------------------------------------------------
 func TestHandleApplicationStatusRejectsWorkflowError(t *testing.T) {
 	updateExecutor := &fakeUpdateApplicationStatusExecutor{err: errors.New("invalid transition")}
-	handlers := NewApplicationHandlers(nil, nil, nil, updateExecutor)
+	handlers := NewApplicationHandlers(nil, nil, nil, nil, updateExecutor)
 
 	request := httptest.NewRequest(http.MethodPatch, "/applications/app-001/status", strings.NewReader(`{"status":"interviewing"}`))
 	response := httptest.NewRecorder()
@@ -337,4 +337,89 @@ func newAPIHandlerTestApplication(t *testing.T, id domain.ApplicationID, status 
 	}
 
 	return application
+}
+
+// -----------------------------------------------------------------------------
+// fakeUpdateApplicationDetailsExecutor
+//
+// Provides a fake update details workflow for API handler tests.
+// -----------------------------------------------------------------------------
+type fakeUpdateApplicationDetailsExecutor struct {
+	application domain.Application
+	err         error
+	called      bool
+}
+
+// -----------------------------------------------------------------------------
+// Execute
+//
+// Records update details workflow execution and returns the configured result.
+// -----------------------------------------------------------------------------
+func (executor *fakeUpdateApplicationDetailsExecutor) Execute(ctx context.Context, input application.UpdateApplicationDetailsInput) (domain.Application, error) {
+	executor.called = true
+
+	if executor.err != nil {
+		return domain.Application{}, executor.err
+	}
+
+	return executor.application, nil
+}
+
+// -----------------------------------------------------------------------------
+// TestHandleApplicationResourceUpdatesDetails
+//
+// Verifies that PATCH /applications/{id} executes the details workflow.
+// -----------------------------------------------------------------------------
+func TestHandleApplicationResourceUpdatesDetails(t *testing.T) {
+	updatedApplication := newAPIHandlerTestApplication(t, "app-001", domain.StatusApplied)
+	updateExecutor := &fakeUpdateApplicationDetailsExecutor{application: updatedApplication}
+	handlers := NewApplicationHandlers(nil, nil, nil, updateExecutor, nil)
+
+	requestBody := `{
+        "title": "Senior Backend Developer",
+        "company_name": "Example Labs",
+        "company_website": "https://labs.example.com",
+        "source": "Referral",
+        "notes": "Updated details."
+    }`
+
+	request := httptest.NewRequest(http.MethodPatch, "/applications/app-001", strings.NewReader(requestBody))
+	response := httptest.NewRecorder()
+
+	handlers.HandleApplicationResource(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, response.Code)
+	}
+
+	if !updateExecutor.called {
+		t.Fatal("expected update details workflow to be called")
+	}
+}
+
+// -----------------------------------------------------------------------------
+// TestHandleApplicationResourceRejectsDetailsWorkflowError
+//
+// Verifies that details workflow errors return a bad request response.
+// -----------------------------------------------------------------------------
+func TestHandleApplicationResourceRejectsDetailsWorkflowError(t *testing.T) {
+	updateExecutor := &fakeUpdateApplicationDetailsExecutor{err: errors.New("invalid details")}
+	handlers := NewApplicationHandlers(nil, nil, nil, updateExecutor, nil)
+
+	requestBody := `{
+        "title": "",
+        "company_name": "Example Labs",
+        "company_website": "https://labs.example.com",
+        "source": "Referral",
+        "notes": "Updated details."
+    }`
+
+	request := httptest.NewRequest(http.MethodPatch, "/applications/app-001", strings.NewReader(requestBody))
+	response := httptest.NewRecorder()
+
+	handlers.HandleApplicationResource(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, response.Code)
+	}
 }

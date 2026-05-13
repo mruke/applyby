@@ -12,7 +12,7 @@ import (
 // Verifies that the expanded router sends search requests to workflow handlers.
 // -----------------------------------------------------------------------------
 func TestNewExpandedRouterRoutesApplicationSearch(t *testing.T) {
-	router := NewExpandedRouter(NewApplicationHandlers(nil, nil, nil, nil), NewWorkflowHandlers(WorkflowHandlerDependencies{}))
+	router := NewExpandedRouter(NewApplicationHandlers(nil, nil, nil, nil, nil), NewWorkflowHandlers(WorkflowHandlerDependencies{}))
 
 	request := httptest.NewRequest(http.MethodGet, "/applications/search", nil)
 	response := httptest.NewRecorder()
@@ -30,7 +30,7 @@ func TestNewExpandedRouterRoutesApplicationSearch(t *testing.T) {
 // Verifies that the expanded router sends nested application workflow requests correctly.
 // -----------------------------------------------------------------------------
 func TestNewExpandedRouterRoutesApplicationWorkflow(t *testing.T) {
-	router := NewExpandedRouter(NewApplicationHandlers(nil, nil, nil, nil), NewWorkflowHandlers(WorkflowHandlerDependencies{}))
+	router := NewExpandedRouter(NewApplicationHandlers(nil, nil, nil, nil, nil), NewWorkflowHandlers(WorkflowHandlerDependencies{}))
 
 	request := httptest.NewRequest(http.MethodGet, "/applications/app-001/reminders", nil)
 	response := httptest.NewRecorder()
@@ -48,7 +48,7 @@ func TestNewExpandedRouterRoutesApplicationWorkflow(t *testing.T) {
 // Verifies that the expanded router sends detail requests to application handlers.
 // -----------------------------------------------------------------------------
 func TestNewExpandedRouterRoutesApplicationDetail(t *testing.T) {
-	router := NewExpandedRouter(NewApplicationHandlers(nil, nil, nil, nil), NewWorkflowHandlers(WorkflowHandlerDependencies{}))
+	router := NewExpandedRouter(NewApplicationHandlers(nil, nil, nil, nil, nil), NewWorkflowHandlers(WorkflowHandlerDependencies{}))
 
 	request := httptest.NewRequest(http.MethodGet, "/applications/app-001", nil)
 	response := httptest.NewRecorder()
@@ -66,7 +66,7 @@ func TestNewExpandedRouterRoutesApplicationDetail(t *testing.T) {
 // Verifies that existing status routes still reach the application status handler.
 // -----------------------------------------------------------------------------
 func TestNewExpandedRouterFallsBackToApplicationStatus(t *testing.T) {
-	router := NewExpandedRouter(NewApplicationHandlers(nil, nil, nil, nil), NewWorkflowHandlers(WorkflowHandlerDependencies{}))
+	router := NewExpandedRouter(NewApplicationHandlers(nil, nil, nil, nil, nil), NewWorkflowHandlers(WorkflowHandlerDependencies{}))
 
 	request := httptest.NewRequest(http.MethodPatch, "/applications/app-001/status", nil)
 	response := httptest.NewRecorder()
@@ -84,7 +84,7 @@ func TestNewExpandedRouterFallsBackToApplicationStatus(t *testing.T) {
 // Verifies that the expanded router sends reminder completion requests correctly.
 // -----------------------------------------------------------------------------
 func TestNewExpandedRouterRoutesReminderComplete(t *testing.T) {
-	router := NewExpandedRouter(NewApplicationHandlers(nil, nil, nil, nil), NewWorkflowHandlers(WorkflowHandlerDependencies{}))
+	router := NewExpandedRouter(NewApplicationHandlers(nil, nil, nil, nil, nil), NewWorkflowHandlers(WorkflowHandlerDependencies{}))
 
 	request := httptest.NewRequest(http.MethodPatch, "/reminders/rem-001/complete", nil)
 	response := httptest.NewRecorder()

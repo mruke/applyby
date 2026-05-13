@@ -59,6 +59,7 @@ func run() error {
 		application.NewCreateApplicationService(repository, repository),
 		application.NewListApplicationsService(repository),
 		application.NewGetApplicationService(repository),
+		application.NewUpdateApplicationDetailsService(repository, repository),
 		application.NewUpdateApplicationStatusService(repository, repository),
 	)
 
