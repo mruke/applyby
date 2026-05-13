@@ -32,6 +32,18 @@ import type {
 import { formatLongDate } from "../utils/dateFormatting";
 
 /**
+ * SectionErrorMessages
+ *
+ * Represents independently recoverable load failures for detail-page sections.
+ */
+type SectionErrorMessages = {
+  activity: string | null;
+  contacts: string | null;
+  documents: string | null;
+  reminders: string | null;
+};
+
+/**
  * ApplicationDetailPageState
  *
  * Represents the loading and workflow state for the application detail page.
@@ -49,6 +61,7 @@ type ApplicationDetailPageState = {
   isSubmittingReminder: boolean;
   isSubmittingStatus: boolean;
   reminders: ReminderResponse[];
+  sectionErrors: SectionErrorMessages;
   successMessage: string | null;
 };
 
@@ -63,7 +76,22 @@ type ApplicationDetailData = {
   contacts: ContactResponse[];
   documents: DocumentResponse[];
   reminders: ReminderResponse[];
+  sectionErrors: SectionErrorMessages;
 };
+
+/**
+ * emptySectionErrors
+ *
+ * Provides the default section-level error state.
+ */
+function emptySectionErrors(): SectionErrorMessages {
+  return {
+    activity: null,
+    contacts: null,
+    documents: null,
+    reminders: null
+  };
+}
 
 /**
  * emptyApplicationDetailData
@@ -76,14 +104,58 @@ function emptyApplicationDetailData(): ApplicationDetailData {
     application: null,
     contacts: [],
     documents: [],
-    reminders: []
+    reminders: [],
+    sectionErrors: emptySectionErrors()
   };
+}
+
+/**
+ * sectionErrorMessage
+ *
+ * Provides readable section-level load error messages.
+ */
+function sectionErrorMessage(section: keyof SectionErrorMessages): string {
+  switch (section) {
+    case "activity":
+      return "Activity could not be loaded.";
+    case "contacts":
+      return "Contacts could not be loaded.";
+    case "documents":
+      return "Documents could not be loaded.";
+    case "reminders":
+      return "Reminders could not be loaded.";
+    default:
+      return "Section data could not be loaded.";
+  }
+}
+
+/**
+ * resultValueOrDefault
+ *
+ * Returns the fulfilled result value or a fallback when a section request fails.
+ */
+function resultValueOrDefault<TValue>(result: PromiseSettledResult<TValue>, fallback: TValue): TValue {
+  return result.status === "fulfilled" ? result.value : fallback;
+}
+
+/**
+ * sectionErrorFromResult
+ *
+ * Returns a section-specific error message when a section request fails.
+ */
+function sectionErrorFromResult<TValue>(
+  section: keyof SectionErrorMessages,
+  result: PromiseSettledResult<TValue>
+): string | null {
+  return result.status === "rejected" ? sectionErrorMessage(section) : null;
 }
 
 /**
  * fetchApplicationDetailData
  *
  * Loads one application and its related detail resources.
+ * The core application must load successfully. Related sections are allowed
+ * to fail independently so one supporting feature does not block the page.
  */
 async function fetchApplicationDetailData(applicationId: string): Promise<ApplicationDetailData> {
   const application = await getApplicationById(applicationId);
@@ -92,19 +164,52 @@ async function fetchApplicationDetailData(applicationId: string): Promise<Applic
     return emptyApplicationDetailData();
   }
 
-  const [remindersResponse, activityResponse, contactsResponse, documentsResponse] = await Promise.all([
+  const [remindersResult, activityResult, contactsResult, documentsResult] = await Promise.allSettled([
     getReminders(applicationId),
     getActivityEvents(applicationId),
     getContacts(applicationId),
     getDocuments(applicationId)
   ]);
 
+  const remindersResponse = resultValueOrDefault(remindersResult, { reminders: [] });
+  const activityResponse = resultValueOrDefault(activityResult, { activity_events: [] });
+  const contactsResponse = resultValueOrDefault(contactsResult, { contacts: [] });
+  const documentsResponse = resultValueOrDefault(documentsResult, { documents: [] });
+
   return {
     activityEvents: activityResponse.activity_events,
     application,
     contacts: contactsResponse.contacts,
     documents: documentsResponse.documents,
-    reminders: remindersResponse.reminders
+    reminders: remindersResponse.reminders,
+    sectionErrors: {
+      activity: sectionErrorFromResult("activity", activityResult),
+      contacts: sectionErrorFromResult("contacts", contactsResult),
+      documents: sectionErrorFromResult("documents", documentsResult),
+      reminders: sectionErrorFromResult("reminders", remindersResult)
+    }
+  };
+}
+
+/**
+ * applyDetailData
+ *
+ * Applies loaded detail data to page state.
+ */
+function applyDetailData(
+  currentState: ApplicationDetailPageState,
+  detailData: ApplicationDetailData
+): ApplicationDetailPageState {
+  return {
+    ...currentState,
+    activityEvents: detailData.activityEvents,
+    application: detailData.application,
+    contacts: detailData.contacts,
+    documents: detailData.documents,
+    errorMessage: null,
+    isLoading: false,
+    reminders: detailData.reminders,
+    sectionErrors: detailData.sectionErrors
   };
 }
 
@@ -130,6 +235,7 @@ export function ApplicationDetailPage() {
     isSubmittingReminder: false,
     isSubmittingStatus: false,
     reminders: [],
+    sectionErrors: emptySectionErrors(),
     successMessage: null
   });
 
@@ -151,16 +257,7 @@ export function ApplicationDetailPage() {
 
     const detailData = await fetchApplicationDetailData(applicationId);
 
-    setState((currentState) => ({
-      ...currentState,
-      activityEvents: detailData.activityEvents,
-      application: detailData.application,
-      contacts: detailData.contacts,
-      documents: detailData.documents,
-      errorMessage: null,
-      isLoading: false,
-      reminders: detailData.reminders
-    }));
+    setState((currentState) => applyDetailData(currentState, detailData));
   }, [applicationId]);
 
   useEffect(() => {
@@ -178,16 +275,7 @@ export function ApplicationDetailPage() {
           return;
         }
 
-        setState((currentState) => ({
-          ...currentState,
-          activityEvents: detailData.activityEvents,
-          application: detailData.application,
-          contacts: detailData.contacts,
-          documents: detailData.documents,
-          errorMessage: null,
-          isLoading: false,
-          reminders: detailData.reminders
-        }));
+        setState((currentState) => applyDetailData(currentState, detailData));
       } catch {
         if (!isCurrentRequest) {
           return;
@@ -197,7 +285,8 @@ export function ApplicationDetailPage() {
           ...currentState,
           application: null,
           errorMessage: "Application could not be loaded. Check that the backend is running and try again.",
-          isLoading: false
+          isLoading: false,
+          sectionErrors: emptySectionErrors()
         }));
       }
     }
@@ -465,21 +554,57 @@ export function ApplicationDetailPage() {
 
         <ReminderForm isSubmitting={state.isSubmittingReminder} onSubmit={handleScheduleReminder} />
 
-        <ReminderList
-          isCompleting={state.isCompletingReminder}
-          onComplete={handleCompleteReminder}
-          reminders={state.reminders}
-        />
+        {state.sectionErrors.reminders ? (
+          <section className="state-card" aria-labelledby="reminders-heading">
+            <h2 id="reminders-heading">Reminders</h2>
+            <p className="form-message form-message--error" role="alert">
+              {state.sectionErrors.reminders}
+            </p>
+          </section>
+        ) : (
+          <ReminderList
+            isCompleting={state.isCompletingReminder}
+            onComplete={handleCompleteReminder}
+            reminders={state.reminders}
+          />
+        )}
 
-        <ActivityTimeline events={state.activityEvents} />
+        {state.sectionErrors.activity ? (
+          <section className="state-card" aria-labelledby="activity-heading">
+            <h2 id="activity-heading">Activity</h2>
+            <p className="form-message form-message--error" role="alert">
+              {state.sectionErrors.activity}
+            </p>
+          </section>
+        ) : (
+          <ActivityTimeline events={state.activityEvents} />
+        )}
 
         <ContactForm isSubmitting={state.isAddingContact} onSubmit={handleAddContact} />
 
-        <ContactList contacts={state.contacts} />
+        {state.sectionErrors.contacts ? (
+          <section className="state-card" aria-labelledby="contacts-heading">
+            <h2 id="contacts-heading">Contacts</h2>
+            <p className="form-message form-message--error" role="alert">
+              {state.sectionErrors.contacts}
+            </p>
+          </section>
+        ) : (
+          <ContactList contacts={state.contacts} />
+        )}
 
         <DocumentForm isSubmitting={state.isAddingDocument} onSubmit={handleAddDocument} />
 
-        <DocumentList documents={state.documents} />
+        {state.sectionErrors.documents ? (
+          <section className="state-card" aria-labelledby="documents-heading">
+            <h2 id="documents-heading">Documents</h2>
+            <p className="form-message form-message--error" role="alert">
+              {state.sectionErrors.documents}
+            </p>
+          </section>
+        ) : (
+          <DocumentList documents={state.documents} />
+        )}
       </section>
     </>
   );
