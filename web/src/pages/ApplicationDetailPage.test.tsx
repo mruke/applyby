@@ -267,6 +267,10 @@ describe("ApplicationDetailPage", () => {
     expect(screen.getByText("Status changed from applied to interviewing.")).toBeInTheDocument();
     expect(screen.getByText("Sam Recruiter")).toBeInTheDocument();
     expect(screen.getByText("Backend Resume")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Edit application" })).toHaveAttribute(
+      "href",
+      "/applications/app-001/edit"
+    );
   });
 
   test("shows a not found state when the application does not exist", async () => {
