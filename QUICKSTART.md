@@ -52,3 +52,30 @@ Stop PostgreSQL:
 ```powershell
 docker compose down
 ```
+
+## Frontend Setup
+
+Install frontend dependencies:
+
+```powershell
+cd web
+npm install
+```
+
+Run frontend tests:
+
+```powershell
+npm test
+```
+
+Run the frontend development server:
+
+```powershell
+npm run dev
+```
+
+Build the frontend:
+
+```powershell
+npm run build
+```
