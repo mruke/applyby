@@ -17,7 +17,7 @@ func NewExpandedRouter(applicationHandlers ApplicationHandlers, workflowHandlers
 			return
 		}
 
-		applicationHandlers.HandleApplicationStatus(response, request)
+		applicationHandlers.HandleApplicationResource(response, request)
 	})
 	router.HandleFunc("/reminders/", workflowHandlers.HandleReminderComplete)
 

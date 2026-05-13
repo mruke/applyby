@@ -67,6 +67,32 @@ func (executor *fakeListApplicationsExecutor) Execute(ctx context.Context) ([]do
 }
 
 // -----------------------------------------------------------------------------
+// fakeGetApplicationExecutor
+//
+// Provides a fake get workflow for API handler tests.
+// -----------------------------------------------------------------------------
+type fakeGetApplicationExecutor struct {
+	application domain.Application
+	err         error
+	called      bool
+}
+
+// -----------------------------------------------------------------------------
+// Execute
+//
+// Records get workflow execution and returns the configured fake result.
+// -----------------------------------------------------------------------------
+func (executor *fakeGetApplicationExecutor) Execute(ctx context.Context, input application.GetApplicationInput) (domain.Application, error) {
+	executor.called = true
+
+	if executor.err != nil {
+		return domain.Application{}, executor.err
+	}
+
+	return executor.application, nil
+}
+
+// -----------------------------------------------------------------------------
 // fakeUpdateApplicationStatusExecutor
 //
 // Provides a fake update status workflow for API handler tests.
@@ -100,7 +126,7 @@ func (executor *fakeUpdateApplicationStatusExecutor) Execute(ctx context.Context
 func TestHandleApplicationsCreatesApplication(t *testing.T) {
 	createdApplication := newAPIHandlerTestApplication(t, "app-001", domain.StatusApplied)
 	createExecutor := &fakeCreateApplicationExecutor{application: createdApplication}
-	handlers := NewApplicationHandlers(createExecutor, nil, nil)
+	handlers := NewApplicationHandlers(createExecutor, nil, nil, nil)
 
 	requestBody := `{
         "id": "app-001",
@@ -133,7 +159,7 @@ func TestHandleApplicationsCreatesApplication(t *testing.T) {
 // Verifies that POST /applications rejects invalid JSON.
 // -----------------------------------------------------------------------------
 func TestHandleApplicationsRejectsInvalidCreateJSON(t *testing.T) {
-	handlers := NewApplicationHandlers(&fakeCreateApplicationExecutor{}, nil, nil)
+	handlers := NewApplicationHandlers(&fakeCreateApplicationExecutor{}, nil, nil, nil)
 	request := httptest.NewRequest(http.MethodPost, "/applications", bytes.NewBufferString("{"))
 	response := httptest.NewRecorder()
 
@@ -152,7 +178,7 @@ func TestHandleApplicationsRejectsInvalidCreateJSON(t *testing.T) {
 func TestHandleApplicationsListsApplications(t *testing.T) {
 	application := newAPIHandlerTestApplication(t, "app-001", domain.StatusApplied)
 	listExecutor := &fakeListApplicationsExecutor{applications: []domain.Application{application}}
-	handlers := NewApplicationHandlers(nil, listExecutor, nil)
+	handlers := NewApplicationHandlers(nil, listExecutor, nil, nil)
 
 	request := httptest.NewRequest(http.MethodGet, "/applications", nil)
 	response := httptest.NewRecorder()
@@ -174,7 +200,7 @@ func TestHandleApplicationsListsApplications(t *testing.T) {
 // Verifies that collection handler rejects unsupported HTTP methods.
 // -----------------------------------------------------------------------------
 func TestHandleApplicationsRejectsUnsupportedMethod(t *testing.T) {
-	handlers := NewApplicationHandlers(nil, nil, nil)
+	handlers := NewApplicationHandlers(nil, nil, nil, nil)
 	request := httptest.NewRequest(http.MethodDelete, "/applications", nil)
 	response := httptest.NewRecorder()
 
@@ -186,6 +212,49 @@ func TestHandleApplicationsRejectsUnsupportedMethod(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+// TestHandleApplicationResourceGetsApplication
+//
+// Verifies that GET /applications/{id} executes the detail workflow.
+// -----------------------------------------------------------------------------
+func TestHandleApplicationResourceGetsApplication(t *testing.T) {
+	application := newAPIHandlerTestApplication(t, "app-001", domain.StatusApplied)
+	getExecutor := &fakeGetApplicationExecutor{application: application}
+	handlers := NewApplicationHandlers(nil, nil, getExecutor, nil)
+
+	request := httptest.NewRequest(http.MethodGet, "/applications/app-001", nil)
+	response := httptest.NewRecorder()
+
+	handlers.HandleApplicationResource(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, response.Code)
+	}
+
+	if !getExecutor.called {
+		t.Fatal("expected get workflow to be called")
+	}
+}
+
+// -----------------------------------------------------------------------------
+// TestHandleApplicationResourceReturnsNotFoundForMissingApplication
+//
+// Verifies that detail workflow errors return a not found response.
+// -----------------------------------------------------------------------------
+func TestHandleApplicationResourceReturnsNotFoundForMissingApplication(t *testing.T) {
+	getExecutor := &fakeGetApplicationExecutor{err: errors.New("application not found")}
+	handlers := NewApplicationHandlers(nil, nil, getExecutor, nil)
+
+	request := httptest.NewRequest(http.MethodGet, "/applications/app-001", nil)
+	response := httptest.NewRecorder()
+
+	handlers.HandleApplicationResource(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d", http.StatusNotFound, response.Code)
+	}
+}
+
+// -----------------------------------------------------------------------------
 // TestHandleApplicationStatusUpdatesStatus
 //
 // Verifies that PATCH /applications/{id}/status executes the update workflow.
@@ -193,12 +262,12 @@ func TestHandleApplicationsRejectsUnsupportedMethod(t *testing.T) {
 func TestHandleApplicationStatusUpdatesStatus(t *testing.T) {
 	updatedApplication := newAPIHandlerTestApplication(t, "app-001", domain.StatusInterviewing)
 	updateExecutor := &fakeUpdateApplicationStatusExecutor{application: updatedApplication}
-	handlers := NewApplicationHandlers(nil, nil, updateExecutor)
+	handlers := NewApplicationHandlers(nil, nil, nil, updateExecutor)
 
 	request := httptest.NewRequest(http.MethodPatch, "/applications/app-001/status", strings.NewReader(`{"status":"interviewing"}`))
 	response := httptest.NewRecorder()
 
-	handlers.HandleApplicationStatus(response, request)
+	handlers.HandleApplicationResource(response, request)
 
 	if response.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d", http.StatusOK, response.Code)
@@ -215,7 +284,7 @@ func TestHandleApplicationStatusUpdatesStatus(t *testing.T) {
 // Verifies that invalid status update paths return not found.
 // -----------------------------------------------------------------------------
 func TestHandleApplicationStatusRejectsInvalidRoute(t *testing.T) {
-	handlers := NewApplicationHandlers(nil, nil, &fakeUpdateApplicationStatusExecutor{})
+	handlers := NewApplicationHandlers(nil, nil, nil, &fakeUpdateApplicationStatusExecutor{})
 
 	request := httptest.NewRequest(http.MethodPatch, "/applications/app-001", strings.NewReader(`{"status":"interviewing"}`))
 	response := httptest.NewRecorder()
@@ -234,12 +303,12 @@ func TestHandleApplicationStatusRejectsInvalidRoute(t *testing.T) {
 // -----------------------------------------------------------------------------
 func TestHandleApplicationStatusRejectsWorkflowError(t *testing.T) {
 	updateExecutor := &fakeUpdateApplicationStatusExecutor{err: errors.New("invalid transition")}
-	handlers := NewApplicationHandlers(nil, nil, updateExecutor)
+	handlers := NewApplicationHandlers(nil, nil, nil, updateExecutor)
 
 	request := httptest.NewRequest(http.MethodPatch, "/applications/app-001/status", strings.NewReader(`{"status":"interviewing"}`))
 	response := httptest.NewRecorder()
 
-	handlers.HandleApplicationStatus(response, request)
+	handlers.HandleApplicationResource(response, request)
 
 	if response.Code != http.StatusBadRequest {
 		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, response.Code)

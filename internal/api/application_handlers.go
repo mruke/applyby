@@ -30,6 +30,15 @@ type listApplicationsExecutor interface {
 }
 
 // -----------------------------------------------------------------------------
+// getApplicationExecutor
+//
+// Defines the application behavior needed by the get application handler.
+// -----------------------------------------------------------------------------
+type getApplicationExecutor interface {
+	Execute(ctx context.Context, input application.GetApplicationInput) (domain.Application, error)
+}
+
+// -----------------------------------------------------------------------------
 // updateApplicationStatusExecutor
 //
 // Defines the application behavior needed by the update status handler.
@@ -46,6 +55,7 @@ type updateApplicationStatusExecutor interface {
 type ApplicationHandlers struct {
 	createApplication       createApplicationExecutor
 	listApplications        listApplicationsExecutor
+	getApplication          getApplicationExecutor
 	updateApplicationStatus updateApplicationStatusExecutor
 }
 
@@ -57,11 +67,13 @@ type ApplicationHandlers struct {
 func NewApplicationHandlers(
 	createApplication createApplicationExecutor,
 	listApplications listApplicationsExecutor,
+	getApplication getApplicationExecutor,
 	updateApplicationStatus updateApplicationStatusExecutor,
 ) ApplicationHandlers {
 	return ApplicationHandlers{
 		createApplication:       createApplication,
 		listApplications:        listApplications,
+		getApplication:          getApplication,
 		updateApplicationStatus: updateApplicationStatus,
 	}
 }
@@ -77,6 +89,34 @@ func (handlers ApplicationHandlers) HandleApplications(response http.ResponseWri
 		handlers.handleListApplications(response, request)
 	case http.MethodPost:
 		handlers.handleCreateApplication(response, request)
+	default:
+		writeJSON(response, http.StatusMethodNotAllowed, errorResponse{Error: "method not allowed"})
+	}
+}
+
+// -----------------------------------------------------------------------------
+// HandleApplicationResource
+//
+// Routes item-level application requests by path and HTTP method.
+// -----------------------------------------------------------------------------
+func (handlers ApplicationHandlers) HandleApplicationResource(response http.ResponseWriter, request *http.Request) {
+	switch request.Method {
+	case http.MethodGet:
+		id, ok := applicationIDFromDetailPath(request.URL.Path)
+		if !ok {
+			writeJSON(response, http.StatusNotFound, errorResponse{Error: "route not found"})
+			return
+		}
+
+		handlers.handleGetApplication(response, request, id)
+	case http.MethodPatch:
+		id, ok := applicationIDFromStatusPath(request.URL.Path)
+		if !ok {
+			writeJSON(response, http.StatusNotFound, errorResponse{Error: "route not found"})
+			return
+		}
+
+		handlers.handleUpdateApplicationStatus(response, request, id)
 	default:
 		writeJSON(response, http.StatusMethodNotAllowed, errorResponse{Error: "method not allowed"})
 	}
@@ -156,6 +196,28 @@ func (handlers ApplicationHandlers) handleListApplications(response http.Respons
 }
 
 // -----------------------------------------------------------------------------
+// handleGetApplication
+//
+// Executes the get application workflow and returns one application response.
+// -----------------------------------------------------------------------------
+func (handlers ApplicationHandlers) handleGetApplication(response http.ResponseWriter, request *http.Request, id domain.ApplicationID) {
+	if handlers.getApplication == nil {
+		writeJSON(response, http.StatusInternalServerError, errorResponse{Error: "get application service is not configured"})
+		return
+	}
+
+	foundApplication, err := handlers.getApplication.Execute(request.Context(), application.GetApplicationInput{
+		ID: id,
+	})
+	if err != nil {
+		writeJSON(response, http.StatusNotFound, errorResponse{Error: err.Error()})
+		return
+	}
+
+	writeJSON(response, http.StatusOK, applicationToResponse(foundApplication))
+}
+
+// -----------------------------------------------------------------------------
 // handleUpdateApplicationStatus
 //
 // Decodes, validates, and executes the update application status workflow.
@@ -189,6 +251,31 @@ func (handlers ApplicationHandlers) handleUpdateApplicationStatus(response http.
 	}
 
 	writeJSON(response, http.StatusOK, applicationToResponse(updatedApplication))
+}
+
+// -----------------------------------------------------------------------------
+// applicationIDFromDetailPath
+//
+// Extracts the application identity from the detail route path.
+// -----------------------------------------------------------------------------
+func applicationIDFromDetailPath(path string) (domain.ApplicationID, bool) {
+	if !strings.HasPrefix(path, "/applications/") {
+		return "", false
+	}
+
+	trimmedPath := strings.TrimPrefix(path, "/applications/")
+	parts := strings.Split(strings.Trim(trimmedPath, "/"), "/")
+
+	if len(parts) != 1 {
+		return "", false
+	}
+
+	id, err := domain.NewApplicationID(parts[0])
+	if err != nil {
+		return "", false
+	}
+
+	return id, true
 }
 
 // -----------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-import { apiClient } from "./client";
+import { ApiError, apiClient } from "./client";
 import { endpoints } from "./endpoints";
 import type {
   ApplicationResponse,
@@ -92,13 +92,18 @@ export async function searchApplications(criteria: ApplicationSearchCriteria): P
 /**
  * getApplicationById
  *
- * Loads one application by using the existing applications collection endpoint.
- * This avoids adding a backend detail endpoint before the backend contract exists.
+ * Loads one application through the backend detail endpoint.
  */
 export async function getApplicationById(applicationId: string): Promise<ApplicationResponse | null> {
-  const response = await getApplications();
+  try {
+    return await apiClient.request<ApplicationResponse>(endpoints.applicationDetail(applicationId));
+  } catch (error) {
+    if (error instanceof ApiError && error.statusCode === 404) {
+      return null;
+    }
 
-  return response.applications.find((application) => application.id === applicationId) ?? null;
+    throw error;
+  }
 }
 
 /**

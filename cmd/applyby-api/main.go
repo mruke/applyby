@@ -58,6 +58,7 @@ func run() error {
 	applicationHandlers := api.NewApplicationHandlers(
 		application.NewCreateApplicationService(repository, repository),
 		application.NewListApplicationsService(repository),
+		application.NewGetApplicationService(repository),
 		application.NewUpdateApplicationStatusService(repository, repository),
 	)
 

@@ -11,7 +11,7 @@ func NewRouter(applicationHandlers ApplicationHandlers) http.Handler {
 	router := http.NewServeMux()
 
 	router.HandleFunc("/applications", applicationHandlers.HandleApplications)
-	router.HandleFunc("/applications/", applicationHandlers.HandleApplicationStatus)
+	router.HandleFunc("/applications/", applicationHandlers.HandleApplicationResource)
 
 	return router
 }
