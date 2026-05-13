@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 
 import { AppShell } from "./components/AppShell";
 import { ApplicationDetailPage } from "./pages/ApplicationDetailPage";
+import { ApplicationEditPage } from "./pages/ApplicationEditPage";
 import { ApplicationsPage } from "./pages/ApplicationsPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -18,6 +19,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/applications" element={<ApplicationsPage />} />
+        <Route path="/applications/:applicationId/edit" element={<ApplicationEditPage />} />
         <Route path="/applications/:applicationId" element={<ApplicationDetailPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

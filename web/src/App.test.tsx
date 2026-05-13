@@ -21,6 +21,7 @@ vi.mock("./api/applications", () => ({
     created_at: "2026-05-10T08:00:00Z"
   }),
   getApplications: vi.fn(() => new Promise(() => {})),
+  updateApplicationDetails: vi.fn(),
   updateApplicationStatus: vi.fn()
 }));
 
@@ -71,6 +72,12 @@ describe("App", () => {
     renderRoute("/applications/app-001");
 
     expect(await screen.findByRole("heading", { level: 1, name: "Backend Developer" })).toBeInTheDocument();
+  });
+
+  test("renders the application edit route", async () => {
+    renderRoute("/applications/app-001/edit");
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Edit application" })).toBeInTheDocument();
   });
 
   test("renders the not found route", () => {
