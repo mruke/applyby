@@ -231,19 +231,19 @@ The frontend should preserve the backend boundaries.
 | Keep route-level pages separate from reusable components. | Page orchestration and component display have different responsibilities. |
 | Keep UI state local unless it needs to be shared. | Avoid unnecessary global state. |
 
-## First Frontend Foundation Checklist
+## Frontend Implementation Notes
 
-The frontend foundation step should add:
+The frontend now includes:
 
 - React and TypeScript project structure
 - app shell layout
-- route placeholders
 - API client boundary
 - shared frontend types
 - loading state component
 - error state component
 - empty state component
-- basic accessibility defaults
-- first frontend validation/test command
-
-The frontend foundation step should not add the full UI yet.
+- application list and search views
+- application detail view
+- status, reminder, contact, document metadata, and activity sections
+- basic dashboard overview
+- frontend validation and build commands
