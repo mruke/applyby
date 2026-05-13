@@ -3,6 +3,7 @@ import { endpoints } from "./endpoints";
 import type {
   ApplicationResponse,
   ApplicationsResponse,
+  ApplicationStatus,
   CreateApplicationFormValues,
   CreateApplicationRequest
 } from "../types/application";
@@ -50,6 +51,18 @@ export async function getApplications(): Promise<ApplicationsResponse> {
 }
 
 /**
+ * getApplicationById
+ *
+ * Loads one application by using the existing applications collection endpoint.
+ * This avoids adding a backend detail endpoint before the backend contract exists.
+ */
+export async function getApplicationById(applicationId: string): Promise<ApplicationResponse | null> {
+  const response = await getApplications();
+
+  return response.applications.find((application) => application.id === applicationId) ?? null;
+}
+
+/**
  * createApplication
  *
  * Creates a new application through the backend API.
@@ -58,5 +71,20 @@ export async function createApplication(values: CreateApplicationFormValues): Pr
   return apiClient.request<ApplicationResponse>(endpoints.applications, {
     method: "POST",
     body: buildCreateApplicationRequest(values)
+  });
+}
+
+/**
+ * updateApplicationStatus
+ *
+ * Updates one application's status through the backend API.
+ */
+export async function updateApplicationStatus(
+  applicationId: string,
+  status: ApplicationStatus
+): Promise<ApplicationResponse> {
+  return apiClient.request<ApplicationResponse>(endpoints.applicationStatus(applicationId), {
+    method: "PATCH",
+    body: { status }
   });
 }

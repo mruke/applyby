@@ -5,7 +5,19 @@ import { describe, expect, test, vi } from "vitest";
 import App from "./App";
 
 vi.mock("./api/applications", () => ({
-  getApplications: vi.fn(() => new Promise(() => {}))
+  createApplication: vi.fn(),
+  getApplicationById: vi.fn().mockResolvedValue({
+    id: "app-001",
+    title: "Backend Developer",
+    company_name: "Example Studio",
+    company_website: "https://example.com",
+    status: "applied",
+    source: "Company site",
+    notes: "Applied with backend resume.",
+    created_at: "2026-05-10T08:00:00Z"
+  }),
+  getApplications: vi.fn(() => new Promise(() => {})),
+  updateApplicationStatus: vi.fn()
 }));
 
 /**
@@ -35,10 +47,10 @@ describe("App", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Applications" })).toBeInTheDocument();
   });
 
-  test("renders the application detail route", () => {
+  test("renders the application detail route", async () => {
     renderRoute("/applications/app-001");
 
-    expect(screen.getByRole("heading", { level: 1, name: "Application Detail" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 1, name: "Backend Developer" })).toBeInTheDocument();
   });
 
   test("renders the not found route", () => {
