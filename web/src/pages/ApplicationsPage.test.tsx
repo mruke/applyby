@@ -1,14 +1,22 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { getApplications } from "../api/applications";
+import { createApplication, getApplications } from "../api/applications";
 import type { ApplicationsResponse } from "../types/application";
 import { ApplicationsPage } from "./ApplicationsPage";
 
 vi.mock("../api/applications", () => ({
+  createApplication: vi.fn(),
   getApplications: vi.fn()
 }));
+
+/**
+ * mockedCreateApplication
+ *
+ * Provides typed access to the mocked create application API function.
+ */
+const mockedCreateApplication = vi.mocked(createApplication);
 
 /**
  * mockedGetApplications
@@ -62,7 +70,23 @@ function buildApplicationsResponse(): ApplicationsResponse {
   };
 }
 
+/**
+ * fillCreateApplicationForm
+ *
+ * Fills the required create application form fields for page tests.
+ */
+function fillCreateApplicationForm() {
+  fireEvent.change(screen.getByLabelText("Application title"), {
+    target: { value: "Backend Developer" }
+  });
+
+  fireEvent.change(screen.getByLabelText("Company name"), {
+    target: { value: "Example Studio" }
+  });
+}
+
 beforeEach(() => {
+  mockedCreateApplication.mockReset();
   mockedGetApplications.mockReset();
 });
 
@@ -90,10 +114,10 @@ describe("ApplicationsPage", () => {
 
     expect(await screen.findByRole("link", { name: "Backend Developer" })).toBeInTheDocument();
     expect(screen.getByText("Example Studio")).toBeInTheDocument();
-    expect(screen.getByText("Applied")).toBeInTheDocument();
+    expect(screen.getAllByText("Applied").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Frontend Developer" })).toBeInTheDocument();
     expect(screen.getByText("Interface Labs")).toBeInTheDocument();
-    expect(screen.getByText("Interviewing")).toBeInTheDocument();
+    expect(screen.getAllByText("Interviewing").length).toBeGreaterThan(0);
   });
 
   test("shows an error state when applications fail to load", async () => {
@@ -102,11 +126,51 @@ describe("ApplicationsPage", () => {
     renderApplicationsPage();
 
     expect(
-      await screen.findByRole("heading", { level: 2, name: "Applications could not be loaded" })
+      await screen.findByRole("heading", { level: 2, name: "Applications need attention" })
     ).toBeInTheDocument();
 
     await waitFor(() => {
       expect(mockedGetApplications).toHaveBeenCalledTimes(1);
     });
+  });
+
+  test("creates an application and refreshes the list", async () => {
+    mockedGetApplications
+      .mockResolvedValueOnce({ applications: [] })
+      .mockResolvedValueOnce(buildApplicationsResponse());
+    mockedCreateApplication.mockResolvedValue(buildApplicationsResponse().applications[0]);
+
+    renderApplicationsPage();
+
+    expect(await screen.findByRole("heading", { level: 2, name: "No applications yet" })).toBeInTheDocument();
+
+    fillCreateApplicationForm();
+    fireEvent.click(screen.getByRole("button", { name: "Add application" }));
+
+    await waitFor(() => {
+      expect(mockedCreateApplication).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Backend Developer",
+          companyName: "Example Studio"
+        })
+      );
+    });
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Application added.");
+    expect(screen.getByRole("link", { name: "Backend Developer" })).toBeInTheDocument();
+  });
+
+  test("shows an error when create application fails", async () => {
+    mockedGetApplications.mockResolvedValue({ applications: [] });
+    mockedCreateApplication.mockRejectedValue(new Error("save failed"));
+
+    renderApplicationsPage();
+
+    expect(await screen.findByRole("heading", { level: 2, name: "No applications yet" })).toBeInTheDocument();
+
+    fillCreateApplicationForm();
+    fireEvent.click(screen.getByRole("button", { name: "Add application" }));
+
+    expect(await screen.findByRole("heading", { level: 2, name: "Applications need attention" })).toBeInTheDocument();
   });
 });
