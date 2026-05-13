@@ -3,57 +3,39 @@ package application
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/mruke/applyby/internal/domain"
 )
 
-// -----------------------------------------------------------------------------
-// ReminderCompleterRepository
-//
-// Defines repository behavior required to complete a reminder.
-// -----------------------------------------------------------------------------
 type ReminderCompleterRepository interface {
 	ReminderFinder
 	ReminderSaver
 }
 
-// -----------------------------------------------------------------------------
-// CompleteReminderInput
-//
-// Contains the data required to mark a reminder complete.
-// -----------------------------------------------------------------------------
 type CompleteReminderInput struct {
 	ID domain.ReminderID
 }
 
-// -----------------------------------------------------------------------------
-// CompleteReminderService
-//
-// Coordinates the workflow for completing a reminder.
-// -----------------------------------------------------------------------------
 type CompleteReminderService struct {
-	repository ReminderCompleterRepository
+	repository       ReminderCompleterRepository
+	activityRecorder ActivityEventRecorder
 }
 
-// -----------------------------------------------------------------------------
-// NewCompleteReminderService
-//
-// Creates a service for the complete reminder workflow.
-// -----------------------------------------------------------------------------
-func NewCompleteReminderService(repository ReminderCompleterRepository) CompleteReminderService {
+func NewCompleteReminderService(repository ReminderCompleterRepository, activityRecorder ActivityEventRecorder) CompleteReminderService {
 	return CompleteReminderService{
-		repository: repository,
+		repository:       repository,
+		activityRecorder: activityRecorder,
 	}
 }
 
-// -----------------------------------------------------------------------------
-// Execute
-//
-// Loads a reminder, marks it complete, and saves the update.
-// -----------------------------------------------------------------------------
 func (service CompleteReminderService) Execute(ctx context.Context, input CompleteReminderInput) (domain.Reminder, error) {
 	if service.repository == nil {
 		return domain.Reminder{}, fmt.Errorf("reminder completer repository is required")
+	}
+
+	if service.activityRecorder == nil {
+		return domain.Reminder{}, fmt.Errorf("activity recorder is required")
 	}
 
 	if err := input.ID.Validate(); err != nil {
@@ -68,6 +50,20 @@ func (service CompleteReminderService) Execute(ctx context.Context, input Comple
 	reminder.Completed = true
 
 	if err := service.repository.SaveReminder(ctx, reminder); err != nil {
+		return domain.Reminder{}, err
+	}
+
+	event, err := domain.NewActivityEvent(
+		reminder.ApplicationID,
+		domain.ActivityReminderCompleted,
+		time.Now().UTC(),
+		fmt.Sprintf("Reminder completed: %s.", reminder.Title),
+	)
+	if err != nil {
+		return domain.Reminder{}, err
+	}
+
+	if err := service.activityRecorder.RecordActivityEvent(ctx, event); err != nil {
 		return domain.Reminder{}, err
 	}
 

@@ -13,7 +13,7 @@ import (
 // -----------------------------------------------------------------------------
 func TestAddContactServiceSavesValidContact(t *testing.T) {
 	repository := newFakeContactRepository()
-	service := NewAddContactService(repository)
+	service := NewAddContactService(repository, &fakeApplicationHistoryRepository{})
 
 	contact, err := service.Execute(context.Background(), AddContactInput{
 		ID:            "contact-001",
@@ -43,7 +43,7 @@ func TestAddContactServiceSavesValidContact(t *testing.T) {
 // -----------------------------------------------------------------------------
 func TestAddContactServiceRejectsInvalidContact(t *testing.T) {
 	repository := newFakeContactRepository()
-	service := NewAddContactService(repository)
+	service := NewAddContactService(repository, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), AddContactInput{
 		ID:            "",
@@ -70,7 +70,7 @@ func TestAddContactServiceRejectsInvalidContact(t *testing.T) {
 func TestAddContactServiceReturnsRepositoryError(t *testing.T) {
 	repository := newFakeContactRepository()
 	repository.saveErr = errors.New("save failed")
-	service := NewAddContactService(repository)
+	service := NewAddContactService(repository, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), AddContactInput{
 		ID:            "contact-001",
@@ -91,7 +91,7 @@ func TestAddContactServiceReturnsRepositoryError(t *testing.T) {
 // Verifies that the add contact workflow requires a repository boundary.
 // -----------------------------------------------------------------------------
 func TestAddContactServiceRequiresRepository(t *testing.T) {
-	service := NewAddContactService(nil)
+	service := NewAddContactService(nil, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), AddContactInput{
 		ID:            "contact-001",

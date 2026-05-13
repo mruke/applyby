@@ -56,7 +56,7 @@ func run() error {
 	repository := postgres.NewApplicationRepository(db)
 
 	applicationHandlers := api.NewApplicationHandlers(
-		application.NewCreateApplicationService(repository),
+		application.NewCreateApplicationService(repository, repository),
 		application.NewListApplicationsService(repository),
 		application.NewUpdateApplicationStatusService(repository, repository),
 	)
@@ -64,12 +64,12 @@ func run() error {
 	workflowHandlers := api.NewWorkflowHandlers(api.WorkflowHandlerDependencies{
 		SearchApplications: application.NewSearchApplicationsService(repository),
 		ListActivityEvents: application.NewListActivityEventsService(repository),
-		ScheduleReminder:   application.NewScheduleReminderService(repository),
+		ScheduleReminder:   application.NewScheduleReminderService(repository, repository),
 		ListReminders:      application.NewListRemindersService(repository),
-		CompleteReminder:   application.NewCompleteReminderService(repository),
-		AddContact:         application.NewAddContactService(repository),
+		CompleteReminder:   application.NewCompleteReminderService(repository, repository),
+		AddContact:         application.NewAddContactService(repository, repository),
 		ListContacts:       application.NewListContactsService(repository),
-		AddDocument:        application.NewAddDocumentService(repository),
+		AddDocument:        application.NewAddDocumentService(repository, repository),
 		ListDocuments:      application.NewListDocumentsService(repository),
 	})
 

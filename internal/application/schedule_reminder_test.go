@@ -14,7 +14,7 @@ import (
 // -----------------------------------------------------------------------------
 func TestScheduleReminderServiceSavesValidReminder(t *testing.T) {
 	repository := newFakeReminderRepository()
-	service := NewScheduleReminderService(repository)
+	service := NewScheduleReminderService(repository, &fakeApplicationHistoryRepository{})
 	dueAt := time.Date(2026, 5, 10, 9, 0, 0, 0, time.UTC)
 
 	reminder, err := service.Execute(context.Background(), ScheduleReminderInput{
@@ -44,7 +44,7 @@ func TestScheduleReminderServiceSavesValidReminder(t *testing.T) {
 // -----------------------------------------------------------------------------
 func TestScheduleReminderServiceRejectsInvalidReminder(t *testing.T) {
 	repository := newFakeReminderRepository()
-	service := NewScheduleReminderService(repository)
+	service := NewScheduleReminderService(repository, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), ScheduleReminderInput{
 		ID:            "",
@@ -70,7 +70,7 @@ func TestScheduleReminderServiceRejectsInvalidReminder(t *testing.T) {
 func TestScheduleReminderServiceReturnsRepositoryError(t *testing.T) {
 	repository := newFakeReminderRepository()
 	repository.saveErr = errors.New("save failed")
-	service := NewScheduleReminderService(repository)
+	service := NewScheduleReminderService(repository, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), ScheduleReminderInput{
 		ID:            "rem-001",
@@ -90,7 +90,7 @@ func TestScheduleReminderServiceReturnsRepositoryError(t *testing.T) {
 // Verifies that the schedule reminder workflow requires a repository boundary.
 // -----------------------------------------------------------------------------
 func TestScheduleReminderServiceRequiresRepository(t *testing.T) {
-	service := NewScheduleReminderService(nil)
+	service := NewScheduleReminderService(nil, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), ScheduleReminderInput{
 		ID:            "rem-001",

@@ -8,11 +8,6 @@ import (
 	"github.com/mruke/applyby/internal/domain"
 )
 
-// -----------------------------------------------------------------------------
-// ScheduleReminderInput
-//
-// Contains the data required to schedule a reminder.
-// -----------------------------------------------------------------------------
 type ScheduleReminderInput struct {
 	ID            domain.ReminderID
 	ApplicationID domain.ApplicationID
@@ -20,34 +15,25 @@ type ScheduleReminderInput struct {
 	DueAt         time.Time
 }
 
-// -----------------------------------------------------------------------------
-// ScheduleReminderService
-//
-// Coordinates the workflow for scheduling a reminder.
-// -----------------------------------------------------------------------------
 type ScheduleReminderService struct {
-	repository ReminderSaver
+	repository       ReminderSaver
+	activityRecorder ActivityEventRecorder
 }
 
-// -----------------------------------------------------------------------------
-// NewScheduleReminderService
-//
-// Creates a service for the schedule reminder workflow.
-// -----------------------------------------------------------------------------
-func NewScheduleReminderService(repository ReminderSaver) ScheduleReminderService {
+func NewScheduleReminderService(repository ReminderSaver, activityRecorder ActivityEventRecorder) ScheduleReminderService {
 	return ScheduleReminderService{
-		repository: repository,
+		repository:       repository,
+		activityRecorder: activityRecorder,
 	}
 }
 
-// -----------------------------------------------------------------------------
-// Execute
-//
-// Validates and saves a new reminder through the repository boundary.
-// -----------------------------------------------------------------------------
 func (service ScheduleReminderService) Execute(ctx context.Context, input ScheduleReminderInput) (domain.Reminder, error) {
 	if service.repository == nil {
 		return domain.Reminder{}, fmt.Errorf("reminder saver is required")
+	}
+
+	if service.activityRecorder == nil {
+		return domain.Reminder{}, fmt.Errorf("activity recorder is required")
 	}
 
 	reminder, err := domain.NewReminder(input.ID, input.ApplicationID, input.Title, input.DueAt)
@@ -56,6 +42,20 @@ func (service ScheduleReminderService) Execute(ctx context.Context, input Schedu
 	}
 
 	if err := service.repository.SaveReminder(ctx, reminder); err != nil {
+		return domain.Reminder{}, err
+	}
+
+	event, err := domain.NewActivityEvent(
+		reminder.ApplicationID,
+		domain.ActivityReminderScheduled,
+		time.Now().UTC(),
+		fmt.Sprintf("Reminder scheduled: %s.", reminder.Title),
+	)
+	if err != nil {
+		return domain.Reminder{}, err
+	}
+
+	if err := service.activityRecorder.RecordActivityEvent(ctx, event); err != nil {
 		return domain.Reminder{}, err
 	}
 

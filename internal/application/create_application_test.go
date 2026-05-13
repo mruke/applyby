@@ -16,7 +16,7 @@ import (
 // -----------------------------------------------------------------------------
 func TestCreateApplicationServiceSavesValidApplication(t *testing.T) {
 	repository := newFakeApplicationRepository()
-	service := NewCreateApplicationService(repository)
+	service := NewCreateApplicationService(repository, &fakeApplicationHistoryRepository{})
 	createdAt := time.Date(2026, 5, 10, 8, 0, 0, 0, time.UTC)
 
 	application, err := service.Execute(context.Background(), CreateApplicationInput{
@@ -49,7 +49,7 @@ func TestCreateApplicationServiceSavesValidApplication(t *testing.T) {
 // -----------------------------------------------------------------------------
 func TestCreateApplicationServiceRejectsInvalidApplication(t *testing.T) {
 	repository := newFakeApplicationRepository()
-	service := NewCreateApplicationService(repository)
+	service := NewCreateApplicationService(repository, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), CreateApplicationInput{
 		ID:        "",
@@ -76,7 +76,7 @@ func TestCreateApplicationServiceRejectsInvalidApplication(t *testing.T) {
 func TestCreateApplicationServiceReturnsRepositoryError(t *testing.T) {
 	repository := newFakeApplicationRepository()
 	repository.saveErr = errors.New("save failed")
-	service := NewCreateApplicationService(repository)
+	service := NewCreateApplicationService(repository, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), CreateApplicationInput{
 		ID:        "app-001",
@@ -97,7 +97,7 @@ func TestCreateApplicationServiceReturnsRepositoryError(t *testing.T) {
 // Verifies that the create workflow requires a repository boundary.
 // -----------------------------------------------------------------------------
 func TestCreateApplicationServiceRequiresRepository(t *testing.T) {
-	service := NewCreateApplicationService(nil)
+	service := NewCreateApplicationService(nil, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), CreateApplicationInput{
 		ID:        "app-001",

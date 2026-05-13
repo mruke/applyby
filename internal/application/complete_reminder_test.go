@@ -16,7 +16,7 @@ import (
 // -----------------------------------------------------------------------------
 func TestCompleteReminderServiceMarksReminderComplete(t *testing.T) {
 	repository := newFakeReminderRepository()
-	service := NewCompleteReminderService(repository)
+	service := NewCompleteReminderService(repository, &fakeApplicationHistoryRepository{})
 	reminder := newApplicationReminderTestReminder(t, "rem-001", false)
 
 	repository.reminders[reminder.ID] = reminder
@@ -45,7 +45,7 @@ func TestCompleteReminderServiceMarksReminderComplete(t *testing.T) {
 // -----------------------------------------------------------------------------
 func TestCompleteReminderServiceRejectsMissingID(t *testing.T) {
 	repository := newFakeReminderRepository()
-	service := NewCompleteReminderService(repository)
+	service := NewCompleteReminderService(repository, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), CompleteReminderInput{})
 
@@ -62,7 +62,7 @@ func TestCompleteReminderServiceRejectsMissingID(t *testing.T) {
 func TestCompleteReminderServiceReturnsFindError(t *testing.T) {
 	repository := newFakeReminderRepository()
 	repository.findErr = errors.New("find failed")
-	service := NewCompleteReminderService(repository)
+	service := NewCompleteReminderService(repository, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), CompleteReminderInput{
 		ID: "rem-001",
@@ -81,7 +81,7 @@ func TestCompleteReminderServiceReturnsFindError(t *testing.T) {
 func TestCompleteReminderServiceReturnsSaveError(t *testing.T) {
 	repository := newFakeReminderRepository()
 	repository.saveErr = errors.New("save failed")
-	service := NewCompleteReminderService(repository)
+	service := NewCompleteReminderService(repository, &fakeApplicationHistoryRepository{})
 	reminder := newApplicationReminderTestReminder(t, "rem-001", false)
 
 	repository.reminders[reminder.ID] = reminder
@@ -101,7 +101,7 @@ func TestCompleteReminderServiceReturnsSaveError(t *testing.T) {
 // Verifies that the complete reminder workflow requires a repository boundary.
 // -----------------------------------------------------------------------------
 func TestCompleteReminderServiceRequiresRepository(t *testing.T) {
-	service := NewCompleteReminderService(nil)
+	service := NewCompleteReminderService(nil, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), CompleteReminderInput{
 		ID: "rem-001",
