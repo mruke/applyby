@@ -79,3 +79,33 @@ Build the frontend:
 ```powershell
 npm run build
 ```
+
+## Backend API Server
+
+Start PostgreSQL:
+
+```powershell
+docker compose up -d
+```
+
+Run the Go API server:
+
+```powershell
+$env:APPLYBY_DATABASE_URL = "postgres://applyby:applyby@localhost:5432/applyby?sslmode=disable"
+$env:APPLYBY_HTTP_ADDR = ":8080"
+go run ./cmd/applyby-api
+```
+
+The API server listens on:
+
+```text
+http://localhost:8080
+```
+
+For local frontend development, start the frontend in a separate terminal:
+
+```powershell
+cd web
+$env:VITE_API_BASE_URL = "http://localhost:8080"
+npm run dev
+```
