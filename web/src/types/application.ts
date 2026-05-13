@@ -40,6 +40,36 @@ export type ApplicationsResponse = {
 };
 
 /**
+ * CreateApplicationFormValues
+ *
+ * Represents user-entered values from the create application form.
+ */
+export type CreateApplicationFormValues = {
+  title: string;
+  companyName: string;
+  companyWebsite: string;
+  status: ApplicationStatus;
+  source: string;
+  notes: string;
+};
+
+/**
+ * CreateApplicationRequest
+ *
+ * Represents the backend request body for creating an application.
+ */
+export type CreateApplicationRequest = {
+  id: string;
+  title: string;
+  company_name: string;
+  company_website: string;
+  status: ApplicationStatus;
+  source: string;
+  notes: string;
+  created_at: string;
+};
+
+/**
  * ReminderResponse
  *
  * Represents one reminder returned by the backend API.
