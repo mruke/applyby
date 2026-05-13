@@ -72,3 +72,4 @@ data/processed/
 *.log
 tmp/
 temp/
+*.tsbuildinfo
