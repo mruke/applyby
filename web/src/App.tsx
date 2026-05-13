@@ -1,0 +1,26 @@
+import { Route, Routes } from "react-router-dom";
+
+import { AppShell } from "./components/AppShell";
+import { ApplicationDetailPage } from "./pages/ApplicationDetailPage";
+import { ApplicationsPage } from "./pages/ApplicationsPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
+
+/**
+ * App
+ *
+ * Defines the top-level frontend route structure for ApplyBy.
+ * It keeps routing centralized and wraps all pages in the shared app shell.
+ */
+export default function App() {
+  return (
+    <AppShell>
+      <Routes>
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/applications" element={<ApplicationsPage />} />
+        <Route path="/applications/:applicationId" element={<ApplicationDetailPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </AppShell>
+  );
+}
