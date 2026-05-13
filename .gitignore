@@ -73,3 +73,7 @@ data/processed/
 tmp/
 temp/
 *.tsbuildinfo
+# Vite local cache and generated config output
+web/.vite/
+web/vite.config.js
+web/vite.config.d.ts
