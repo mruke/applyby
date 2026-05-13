@@ -7,6 +7,7 @@
 export const endpoints = {
   applications: "/applications",
   applicationSearch: "/applications/search",
+  applicationDetail: (applicationId: string) => `/applications/${applicationId}`,
   applicationStatus: (applicationId: string) => `/applications/${applicationId}/status`,
   applicationActivity: (applicationId: string) => `/applications/${applicationId}/activity`,
   applicationReminders: (applicationId: string) => `/applications/${applicationId}/reminders`,

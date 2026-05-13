@@ -18,6 +18,26 @@ export type ApiRequestOptions = {
 };
 
 /**
+ * ApiError
+ *
+ * Represents a non-successful response from the backend API.
+ */
+export class ApiError extends Error {
+  readonly statusCode: number;
+
+  /**
+   * constructor
+   *
+   * Creates an API error with the failed response status code.
+   */
+  constructor(statusCode: number) {
+    super(`API request failed with status ${statusCode}.`);
+    this.name = "ApiError";
+    this.statusCode = statusCode;
+  }
+}
+
+/**
  * ApiClient
  *
  * Centralizes HTTP request behavior for the ApplyBy frontend.
@@ -52,7 +72,7 @@ export class ApiClient {
     });
 
     if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}.`);
+      throw new ApiError(response.status);
     }
 
     return response.json() as Promise<TResponse>;
