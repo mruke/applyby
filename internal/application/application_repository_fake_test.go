@@ -13,11 +13,13 @@ import (
 // Provides an in-memory repository for application-layer unit tests.
 // -----------------------------------------------------------------------------
 type fakeApplicationRepository struct {
-	applications map[domain.ApplicationID]domain.Application
-	saveErr      error
-	findErr      error
-	listErr      error
-	saveCalls    int
+	applications     map[domain.ApplicationID]domain.Application
+	saveErr          error
+	findErr          error
+	listErr          error
+	updateDetailsErr error
+	saveCalls        int
+	updateCalls      int
 }
 
 // -----------------------------------------------------------------------------
@@ -41,6 +43,23 @@ func (repository *fakeApplicationRepository) SaveApplication(ctx context.Context
 
 	if repository.saveErr != nil {
 		return repository.saveErr
+	}
+
+	repository.applications[application.ID] = application
+
+	return nil
+}
+
+// -----------------------------------------------------------------------------
+// UpdateApplicationDetails
+//
+// Updates an application in memory for application-layer tests.
+// -----------------------------------------------------------------------------
+func (repository *fakeApplicationRepository) UpdateApplicationDetails(ctx context.Context, application domain.Application) error {
+	repository.updateCalls++
+
+	if repository.updateDetailsErr != nil {
+		return repository.updateDetailsErr
 	}
 
 	repository.applications[application.ID] = application

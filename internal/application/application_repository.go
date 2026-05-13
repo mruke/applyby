@@ -25,6 +25,15 @@ type ApplicationFinder interface {
 }
 
 // -----------------------------------------------------------------------------
+// ApplicationDetailsUpdater
+//
+// Defines the storage behavior required to update non-status application details.
+// -----------------------------------------------------------------------------
+type ApplicationDetailsUpdater interface {
+	UpdateApplicationDetails(ctx context.Context, application domain.Application) error
+}
+
+// -----------------------------------------------------------------------------
 // ApplicationLister
 //
 // Defines the storage behavior required to list tracked applications.
@@ -41,5 +50,6 @@ type ApplicationLister interface {
 type ApplicationRepository interface {
 	ApplicationSaver
 	ApplicationFinder
+	ApplicationDetailsUpdater
 	ApplicationLister
 }

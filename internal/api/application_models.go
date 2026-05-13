@@ -25,6 +25,19 @@ type createApplicationRequest struct {
 }
 
 // -----------------------------------------------------------------------------
+// updateApplicationDetailsRequest
+//
+// Represents the JSON request body for updating non-status application details.
+// -----------------------------------------------------------------------------
+type updateApplicationDetailsRequest struct {
+	Title          string `json:"title"`
+	CompanyName    string `json:"company_name"`
+	CompanyWebsite string `json:"company_website"`
+	Source         string `json:"source"`
+	Notes          string `json:"notes"`
+}
+
+// -----------------------------------------------------------------------------
 // updateApplicationStatusRequest
 //
 // Represents the JSON request body for updating an application status.
@@ -103,6 +116,22 @@ func (request createApplicationRequest) toInput() (application.CreateApplication
 		Notes:     request.Notes,
 		CreatedAt: createdAt,
 	}, nil
+}
+
+// -----------------------------------------------------------------------------
+// toInput
+//
+// Converts an update application details request into an application-layer input model.
+// -----------------------------------------------------------------------------
+func (request updateApplicationDetailsRequest) toInput(id domain.ApplicationID) application.UpdateApplicationDetailsInput {
+	return application.UpdateApplicationDetailsInput{
+		ID:             id,
+		Title:          request.Title,
+		CompanyName:    request.CompanyName,
+		CompanyWebsite: request.CompanyWebsite,
+		Source:         request.Source,
+		Notes:          request.Notes,
+	}
 }
 
 // -----------------------------------------------------------------------------

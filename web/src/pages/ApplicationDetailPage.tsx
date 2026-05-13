@@ -2,11 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { getActivityEvents } from "../api/activity";
-import { getApplicationById, updateApplicationStatus } from "../api/applications";
+import { getApplicationById, updateApplicationDetails, updateApplicationStatus } from "../api/applications";
 import { addContact, getContacts } from "../api/contacts";
 import { addDocument, getDocuments } from "../api/documents";
 import { completeReminder, getReminders, scheduleReminder } from "../api/reminders";
 import { ActivityTimeline } from "../components/ActivityTimeline";
+import { ApplicationEditForm } from "../components/ApplicationEditForm";
 import { ContactForm } from "../components/ContactForm";
 import { ContactList } from "../components/ContactList";
 import { DocumentForm } from "../components/DocumentForm";
@@ -27,6 +28,7 @@ import type {
   CreateDocumentFormValues,
   CreateReminderFormValues,
   DocumentResponse,
+  UpdateApplicationDetailsFormValues,
   ReminderResponse
 } from "../types/application";
 import { formatLongDate } from "../utils/dateFormatting";
@@ -58,6 +60,7 @@ type ApplicationDetailPageState = {
   isAddingDocument: boolean;
   isCompletingReminder: boolean;
   isLoading: boolean;
+  isSubmittingDetails: boolean;
   isSubmittingReminder: boolean;
   isSubmittingStatus: boolean;
   reminders: ReminderResponse[];
@@ -232,6 +235,7 @@ export function ApplicationDetailPage() {
     isAddingDocument: false,
     isCompletingReminder: false,
     isLoading: true,
+    isSubmittingDetails: false,
     isSubmittingReminder: false,
     isSubmittingStatus: false,
     reminders: [],
@@ -298,6 +302,41 @@ export function ApplicationDetailPage() {
     };
   }, [applicationId]);
 
+  /**
+   * handleApplicationDetailsUpdate
+   *
+   * Updates non-status application details, refreshes detail data, and displays feedback.
+   */
+  async function handleApplicationDetailsUpdate(values: UpdateApplicationDetailsFormValues) {
+    if (!applicationId) {
+      return;
+    }
+
+    setState((currentState) => ({
+      ...currentState,
+      errorMessage: null,
+      isSubmittingDetails: true,
+      successMessage: null
+    }));
+
+    try {
+      await updateApplicationDetails(applicationId, values);
+      await loadDetailData();
+
+      setState((currentState) => ({
+        ...currentState,
+        isSubmittingDetails: false,
+        successMessage: "Application details updated."
+      }));
+    } catch {
+      setState((currentState) => ({
+        ...currentState,
+        errorMessage: "Application details could not be updated. Check the form and try again.",
+        isSubmittingDetails: false,
+        successMessage: null
+      }));
+    }
+  }
   /**
    * handleStatusUpdate
    *
@@ -545,6 +584,12 @@ export function ApplicationDetailPage() {
             </div>
           </dl>
         </article>
+
+        <ApplicationEditForm
+          application={state.application}
+          isSubmitting={state.isSubmittingDetails}
+          onSubmit={handleApplicationDetailsUpdate}
+        />
 
         <StatusUpdateForm
           currentStatus={state.application.status}

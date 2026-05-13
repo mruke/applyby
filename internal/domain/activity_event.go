@@ -14,6 +14,7 @@ type ActivityEventType string
 
 const (
 	ActivityApplicationCreated ActivityEventType = "application_created"
+	ActivityApplicationUpdated ActivityEventType = "application_updated"
 	ActivityStatusChanged      ActivityEventType = "status_changed"
 	ActivityNoteAdded          ActivityEventType = "note_added"
 	ActivityReminderScheduled  ActivityEventType = "reminder_scheduled"
@@ -42,6 +43,7 @@ type ActivityEvent struct {
 func AllActivityEventTypes() []ActivityEventType {
 	return []ActivityEventType{
 		ActivityApplicationCreated,
+		ActivityApplicationUpdated,
 		ActivityStatusChanged,
 		ActivityNoteAdded,
 		ActivityReminderScheduled,

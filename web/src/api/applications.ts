@@ -6,7 +6,9 @@ import type {
   ApplicationSearchCriteria,
   ApplicationStatus,
   CreateApplicationFormValues,
-  CreateApplicationRequest
+  CreateApplicationRequest,
+  UpdateApplicationDetailsFormValues,
+  UpdateApplicationDetailsRequest
 } from "../types/application";
 import { createClientId } from "../utils/clientIds";
 
@@ -25,6 +27,21 @@ function buildCreateApplicationRequest(values: CreateApplicationFormValues): Cre
     source: values.source.trim(),
     notes: values.notes.trim(),
     created_at: new Date().toISOString()
+  };
+}
+
+/**
+ * buildUpdateApplicationDetailsRequest
+ *
+ * Converts edit form values into the backend update-details request shape.
+ */
+function buildUpdateApplicationDetailsRequest(values: UpdateApplicationDetailsFormValues): UpdateApplicationDetailsRequest {
+  return {
+    title: values.title.trim(),
+    company_name: values.companyName.trim(),
+    company_website: values.companyWebsite.trim(),
+    source: values.source.trim(),
+    notes: values.notes.trim()
   };
 }
 
@@ -102,6 +119,21 @@ export async function createApplication(values: CreateApplicationFormValues): Pr
   return apiClient.request<ApplicationResponse>(endpoints.applications, {
     method: "POST",
     body: buildCreateApplicationRequest(values)
+  });
+}
+
+/**
+ * updateApplicationDetails
+ *
+ * Updates non-status application details through the backend API.
+ */
+export async function updateApplicationDetails(
+  applicationId: string,
+  values: UpdateApplicationDetailsFormValues
+): Promise<ApplicationResponse> {
+  return apiClient.request<ApplicationResponse>(endpoints.applicationDetail(applicationId), {
+    method: "PATCH",
+    body: buildUpdateApplicationDetailsRequest(values)
   });
 }
 

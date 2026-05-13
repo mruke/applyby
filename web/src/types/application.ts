@@ -82,6 +82,32 @@ export type CreateApplicationRequest = {
 };
 
 /**
+ * UpdateApplicationDetailsFormValues
+ *
+ * Represents editable non-status application detail values.
+ */
+export type UpdateApplicationDetailsFormValues = {
+  title: string;
+  companyName: string;
+  companyWebsite: string;
+  source: string;
+  notes: string;
+};
+
+/**
+ * UpdateApplicationDetailsRequest
+ *
+ * Represents the backend request body for editing application details.
+ */
+export type UpdateApplicationDetailsRequest = {
+  title: string;
+  company_name: string;
+  company_website: string;
+  source: string;
+  notes: string;
+};
+
+/**
  * ReminderResponse
  *
  * Represents one reminder returned by the backend API.

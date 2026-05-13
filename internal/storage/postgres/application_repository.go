@@ -119,6 +119,15 @@ func (repository ApplicationRepository) SaveApplication(ctx context.Context, app
 }
 
 // -----------------------------------------------------------------------------
+// UpdateApplicationDetails
+//
+// Updates non-status application fields while preserving lifecycle state.
+// -----------------------------------------------------------------------------
+func (repository ApplicationRepository) UpdateApplicationDetails(ctx context.Context, application domain.Application) error {
+	return repository.SaveApplication(ctx, application)
+}
+
+// -----------------------------------------------------------------------------
 // FindApplicationByID
 //
 // Retrieves one application by its stable domain identity.
