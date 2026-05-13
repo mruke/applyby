@@ -24,6 +24,16 @@ vi.mock("./api/applications", () => ({
   updateApplicationStatus: vi.fn()
 }));
 
+vi.mock("./api/contacts", () => ({
+  addContact: vi.fn(),
+  getContacts: vi.fn().mockResolvedValue({ contacts: [] })
+}));
+
+vi.mock("./api/documents", () => ({
+  addDocument: vi.fn(),
+  getDocuments: vi.fn().mockResolvedValue({ documents: [] })
+}));
+
 vi.mock("./api/reminders", () => ({
   completeReminder: vi.fn(),
   getReminders: vi.fn().mockResolvedValue({ reminders: [] }),

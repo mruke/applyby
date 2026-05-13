@@ -3,8 +3,14 @@ import { Link, useParams } from "react-router-dom";
 
 import { getActivityEvents } from "../api/activity";
 import { getApplicationById, updateApplicationStatus } from "../api/applications";
+import { addContact, getContacts } from "../api/contacts";
+import { addDocument, getDocuments } from "../api/documents";
 import { completeReminder, getReminders, scheduleReminder } from "../api/reminders";
 import { ActivityTimeline } from "../components/ActivityTimeline";
+import { ContactForm } from "../components/ContactForm";
+import { ContactList } from "../components/ContactList";
+import { DocumentForm } from "../components/DocumentForm";
+import { DocumentList } from "../components/DocumentList";
 import { EmptyState } from "../components/EmptyState";
 import { ErrorState } from "../components/ErrorState";
 import { LoadingState } from "../components/LoadingState";
@@ -16,7 +22,11 @@ import type {
   ActivityEventResponse,
   ApplicationResponse,
   ApplicationStatus,
+  ContactResponse,
+  CreateContactFormValues,
+  CreateDocumentFormValues,
   CreateReminderFormValues,
+  DocumentResponse,
   ReminderResponse
 } from "../types/application";
 
@@ -28,7 +38,11 @@ import type {
 type ApplicationDetailPageState = {
   activityEvents: ActivityEventResponse[];
   application: ApplicationResponse | null;
+  contacts: ContactResponse[];
+  documents: DocumentResponse[];
   errorMessage: string | null;
+  isAddingContact: boolean;
+  isAddingDocument: boolean;
   isCompletingReminder: boolean;
   isLoading: boolean;
   isSubmittingReminder: boolean;
@@ -53,8 +67,8 @@ function formatDate(timestamp: string): string {
 /**
  * ApplicationDetailPage
  *
- * Loads one application from the existing applications API and exposes summary,
- * status, reminder, and activity timeline workflows.
+ * Loads one application and exposes detail workflows for status, reminders,
+ * contacts, document metadata, and activity history.
  */
 export function ApplicationDetailPage() {
   const { applicationId } = useParams<{ applicationId: string }>();
@@ -62,7 +76,11 @@ export function ApplicationDetailPage() {
   const [state, setState] = useState<ApplicationDetailPageState>({
     activityEvents: [],
     application: null,
+    contacts: [],
+    documents: [],
     errorMessage: null,
+    isAddingContact: false,
+    isAddingDocument: false,
     isCompletingReminder: false,
     isLoading: true,
     isSubmittingReminder: false,
@@ -74,7 +92,7 @@ export function ApplicationDetailPage() {
   /**
    * loadDetailData
    *
-   * Loads the current application, reminders, and activity timeline data.
+   * Loads the current application, reminders, contacts, documents, and activity timeline data.
    */
   const loadDetailData = useCallback(async () => {
     if (!applicationId) {
@@ -92,8 +110,10 @@ export function ApplicationDetailPage() {
     if (!application) {
       setState((currentState) => ({
         ...currentState,
-        application: null,
         activityEvents: [],
+        application: null,
+        contacts: [],
+        documents: [],
         errorMessage: null,
         isLoading: false,
         reminders: []
@@ -101,15 +121,19 @@ export function ApplicationDetailPage() {
       return;
     }
 
-    const [remindersResponse, activityResponse] = await Promise.all([
+    const [remindersResponse, activityResponse, contactsResponse, documentsResponse] = await Promise.all([
       getReminders(applicationId),
-      getActivityEvents(applicationId)
+      getActivityEvents(applicationId),
+      getContacts(applicationId),
+      getDocuments(applicationId)
     ]);
 
     setState((currentState) => ({
       ...currentState,
       activityEvents: activityResponse.activity_events,
       application,
+      contacts: contactsResponse.contacts,
+      documents: documentsResponse.documents,
       errorMessage: null,
       isLoading: false,
       reminders: remindersResponse.reminders
@@ -134,8 +158,10 @@ export function ApplicationDetailPage() {
         if (!application) {
           setState((currentState) => ({
             ...currentState,
-            application: null,
             activityEvents: [],
+            application: null,
+            contacts: [],
+            documents: [],
             errorMessage: null,
             isLoading: false,
             reminders: []
@@ -143,9 +169,11 @@ export function ApplicationDetailPage() {
           return;
         }
 
-        const [remindersResponse, activityResponse] = await Promise.all([
+        const [remindersResponse, activityResponse, contactsResponse, documentsResponse] = await Promise.all([
           getReminders(applicationId),
-          getActivityEvents(applicationId)
+          getActivityEvents(applicationId),
+          getContacts(applicationId),
+          getDocuments(applicationId)
         ]);
 
         if (!isCurrentRequest) {
@@ -156,6 +184,8 @@ export function ApplicationDetailPage() {
           ...currentState,
           activityEvents: activityResponse.activity_events,
           application,
+          contacts: contactsResponse.contacts,
+          documents: documentsResponse.documents,
           errorMessage: null,
           isLoading: false,
           reminders: remindersResponse.reminders
@@ -285,6 +315,78 @@ export function ApplicationDetailPage() {
     }
   }
 
+  /**
+   * handleAddContact
+   *
+   * Adds a contact, refreshes detail data, and displays feedback.
+   */
+  async function handleAddContact(values: CreateContactFormValues) {
+    if (!applicationId) {
+      return;
+    }
+
+    setState((currentState) => ({
+      ...currentState,
+      errorMessage: null,
+      isAddingContact: true,
+      successMessage: null
+    }));
+
+    try {
+      await addContact(applicationId, values);
+      await loadDetailData();
+
+      setState((currentState) => ({
+        ...currentState,
+        isAddingContact: false,
+        successMessage: "Contact added."
+      }));
+    } catch {
+      setState((currentState) => ({
+        ...currentState,
+        errorMessage: "Contact could not be added. Check the form and try again.",
+        isAddingContact: false,
+        successMessage: null
+      }));
+    }
+  }
+
+  /**
+   * handleAddDocument
+   *
+   * Adds document metadata, refreshes detail data, and displays feedback.
+   */
+  async function handleAddDocument(values: CreateDocumentFormValues) {
+    if (!applicationId) {
+      return;
+    }
+
+    setState((currentState) => ({
+      ...currentState,
+      errorMessage: null,
+      isAddingDocument: true,
+      successMessage: null
+    }));
+
+    try {
+      await addDocument(applicationId, values);
+      await loadDetailData();
+
+      setState((currentState) => ({
+        ...currentState,
+        isAddingDocument: false,
+        successMessage: "Document metadata added."
+      }));
+    } catch {
+      setState((currentState) => ({
+        ...currentState,
+        errorMessage: "Document metadata could not be added. Check the form and try again.",
+        isAddingDocument: false,
+        successMessage: null
+      }));
+    }
+  }
+
   if (state.isLoading) {
     return <LoadingState message="Loading application..." />;
   }
@@ -372,6 +474,14 @@ export function ApplicationDetailPage() {
         />
 
         <ActivityTimeline events={state.activityEvents} />
+
+        <ContactForm isSubmitting={state.isAddingContact} onSubmit={handleAddContact} />
+
+        <ContactList contacts={state.contacts} />
+
+        <DocumentForm isSubmitting={state.isAddingDocument} onSubmit={handleAddDocument} />
+
+        <DocumentList documents={state.documents} />
       </section>
     </>
   );
