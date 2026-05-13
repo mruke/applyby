@@ -8,11 +8,6 @@ import (
 	"github.com/mruke/applyby/internal/domain"
 )
 
-// -----------------------------------------------------------------------------
-// CreateApplicationInput
-//
-// Contains the data required to create a tracked application.
-// -----------------------------------------------------------------------------
 type CreateApplicationInput struct {
 	ID        domain.ApplicationID
 	Title     string
@@ -23,34 +18,25 @@ type CreateApplicationInput struct {
 	CreatedAt time.Time
 }
 
-// -----------------------------------------------------------------------------
-// CreateApplicationService
-//
-// Coordinates the workflow for creating a tracked application.
-// -----------------------------------------------------------------------------
 type CreateApplicationService struct {
-	repository ApplicationSaver
+	repository       ApplicationSaver
+	activityRecorder ActivityEventRecorder
 }
 
-// -----------------------------------------------------------------------------
-// NewCreateApplicationService
-//
-// Creates a service for the create application workflow.
-// -----------------------------------------------------------------------------
-func NewCreateApplicationService(repository ApplicationSaver) CreateApplicationService {
+func NewCreateApplicationService(repository ApplicationSaver, activityRecorder ActivityEventRecorder) CreateApplicationService {
 	return CreateApplicationService{
-		repository: repository,
+		repository:       repository,
+		activityRecorder: activityRecorder,
 	}
 }
 
-// -----------------------------------------------------------------------------
-// Execute
-//
-// Validates and saves a new application through the repository boundary.
-// -----------------------------------------------------------------------------
 func (service CreateApplicationService) Execute(ctx context.Context, input CreateApplicationInput) (domain.Application, error) {
 	if service.repository == nil {
 		return domain.Application{}, fmt.Errorf("application saver is required")
+	}
+
+	if service.activityRecorder == nil {
+		return domain.Application{}, fmt.Errorf("activity recorder is required")
 	}
 
 	application, err := domain.NewApplication(input.ID, input.Title, input.Company, input.Status, input.CreatedAt)
@@ -62,6 +48,20 @@ func (service CreateApplicationService) Execute(ctx context.Context, input Creat
 	application.Notes = input.Notes
 
 	if err := service.repository.SaveApplication(ctx, application); err != nil {
+		return domain.Application{}, err
+	}
+
+	event, err := domain.NewActivityEvent(
+		application.ID,
+		domain.ActivityApplicationCreated,
+		application.CreatedAt,
+		fmt.Sprintf("Application created: %s at %s.", application.Title, application.Company.Name),
+	)
+	if err != nil {
+		return domain.Application{}, err
+	}
+
+	if err := service.activityRecorder.RecordActivityEvent(ctx, event); err != nil {
 		return domain.Application{}, err
 	}
 

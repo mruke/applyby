@@ -13,7 +13,7 @@ import (
 // -----------------------------------------------------------------------------
 func TestAddDocumentServiceSavesValidDocument(t *testing.T) {
 	repository := newFakeDocumentRepository()
-	service := NewAddDocumentService(repository)
+	service := NewAddDocumentService(repository, &fakeApplicationHistoryRepository{})
 
 	document, err := service.Execute(context.Background(), AddDocumentInput{
 		ID:            "doc-001",
@@ -43,7 +43,7 @@ func TestAddDocumentServiceSavesValidDocument(t *testing.T) {
 // -----------------------------------------------------------------------------
 func TestAddDocumentServiceRejectsInvalidDocument(t *testing.T) {
 	repository := newFakeDocumentRepository()
-	service := NewAddDocumentService(repository)
+	service := NewAddDocumentService(repository, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), AddDocumentInput{
 		ID:            "",
@@ -70,7 +70,7 @@ func TestAddDocumentServiceRejectsInvalidDocument(t *testing.T) {
 func TestAddDocumentServiceReturnsRepositoryError(t *testing.T) {
 	repository := newFakeDocumentRepository()
 	repository.saveErr = errors.New("save failed")
-	service := NewAddDocumentService(repository)
+	service := NewAddDocumentService(repository, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), AddDocumentInput{
 		ID:            "doc-001",
@@ -91,7 +91,7 @@ func TestAddDocumentServiceReturnsRepositoryError(t *testing.T) {
 // Verifies that the add document workflow requires a repository boundary.
 // -----------------------------------------------------------------------------
 func TestAddDocumentServiceRequiresRepository(t *testing.T) {
-	service := NewAddDocumentService(nil)
+	service := NewAddDocumentService(nil, &fakeApplicationHistoryRepository{})
 
 	_, err := service.Execute(context.Background(), AddDocumentInput{
 		ID:            "doc-001",

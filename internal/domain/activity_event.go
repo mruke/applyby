@@ -13,40 +13,13 @@ import (
 type ActivityEventType string
 
 const (
-	// -------------------------------------------------------------------------
-	// ActivityApplicationCreated
-	//
-	// Represents creation of a new application record.
-	// -------------------------------------------------------------------------
 	ActivityApplicationCreated ActivityEventType = "application_created"
-
-	// -------------------------------------------------------------------------
-	// ActivityStatusChanged
-	//
-	// Represents a status change in the application lifecycle.
-	// -------------------------------------------------------------------------
-	ActivityStatusChanged ActivityEventType = "status_changed"
-
-	// -------------------------------------------------------------------------
-	// ActivityNoteAdded
-	//
-	// Represents a note added to an application.
-	// -------------------------------------------------------------------------
-	ActivityNoteAdded ActivityEventType = "note_added"
-
-	// -------------------------------------------------------------------------
-	// ActivityReminderScheduled
-	//
-	// Represents a reminder or follow-up being scheduled.
-	// -------------------------------------------------------------------------
-	ActivityReminderScheduled ActivityEventType = "reminder_scheduled"
-
-	// -------------------------------------------------------------------------
-	// ActivityDocumentAdded
-	//
-	// Represents document metadata being attached to an application.
-	// -------------------------------------------------------------------------
-	ActivityDocumentAdded ActivityEventType = "document_added"
+	ActivityStatusChanged      ActivityEventType = "status_changed"
+	ActivityNoteAdded          ActivityEventType = "note_added"
+	ActivityReminderScheduled  ActivityEventType = "reminder_scheduled"
+	ActivityReminderCompleted  ActivityEventType = "reminder_completed"
+	ActivityContactAdded       ActivityEventType = "contact_added"
+	ActivityDocumentAdded      ActivityEventType = "document_added"
 )
 
 // -----------------------------------------------------------------------------
@@ -72,6 +45,8 @@ func AllActivityEventTypes() []ActivityEventType {
 		ActivityStatusChanged,
 		ActivityNoteAdded,
 		ActivityReminderScheduled,
+		ActivityReminderCompleted,
+		ActivityContactAdded,
 		ActivityDocumentAdded,
 	}
 }
