@@ -4,6 +4,10 @@ import { describe, expect, test, vi } from "vitest";
 
 import App from "./App";
 
+vi.mock("./api/activity", () => ({
+  getActivityEvents: vi.fn().mockResolvedValue({ activity_events: [] })
+}));
+
 vi.mock("./api/applications", () => ({
   createApplication: vi.fn(),
   getApplicationById: vi.fn().mockResolvedValue({
@@ -18,6 +22,12 @@ vi.mock("./api/applications", () => ({
   }),
   getApplications: vi.fn(() => new Promise(() => {})),
   updateApplicationStatus: vi.fn()
+}));
+
+vi.mock("./api/reminders", () => ({
+  completeReminder: vi.fn(),
+  getReminders: vi.fn().mockResolvedValue({ reminders: [] }),
+  scheduleReminder: vi.fn()
 }));
 
 /**
