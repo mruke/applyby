@@ -198,6 +198,18 @@ ApplyBy is organized around four main logical containers.
 
 ## 6. Building Block View
 
+### Current CRUD Scope
+
+The current architecture supports the main local CRM workflow, but not every entity has complete create/read/update/delete coverage yet.
+
+- Applications support creation, listing, detail reading, search/filtering, and lifecycle-aware status updates.
+- Contacts and document metadata support add/read workflows.
+- Reminders support schedule/read/complete workflows.
+- Activity history is append-only and records workflow side effects.
+
+Planned maintenance workflows should continue to follow the existing layered design: domain validation, application service orchestration, repository persistence, thin API handlers, frontend API boundaries, and activity recording where appropriate.
+
+
 The exact package layout may evolve during implementation, but the intended backend responsibilities are:
 
 ```text
@@ -474,3 +486,4 @@ ApplyBy is built as a full-stack personal job application CRM using a Go backend
 The project should demonstrate disciplined architecture and practical software engineering habits.
 
 The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow. Generated data and benchmark coverage remain planned.
+

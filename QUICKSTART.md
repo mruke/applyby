@@ -96,6 +96,13 @@ npm run dev
 
 ## Validation
 
+## Current Workflow Coverage Note
+
+The validation flow covers the current supported workflows: create application, search/list applications, open detail, update status, schedule/complete reminders, add contacts, add document metadata, and verify activity history.
+
+Full maintenance workflows are still planned for editing/removing contacts, editing/removing document metadata, editing/canceling reminders, and editing non-status application details.
+
+
 Run backend formatting and tests from the repository root:
 
 ```
