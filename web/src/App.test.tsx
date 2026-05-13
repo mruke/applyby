@@ -1,8 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import App from "./App";
+
+vi.mock("./api/applications", () => ({
+  getApplications: vi.fn(() => new Promise(() => {}))
+}));
 
 /**
  * renderRoute

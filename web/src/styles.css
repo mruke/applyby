@@ -107,3 +107,76 @@ textarea:focus-visible {
 .state-card h2 {
   margin-top: 0;
 }
+.section-heading-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.section-heading-row h2,
+.section-heading-row p {
+  margin: 0;
+}
+
+.section-heading-row p {
+  color: #4d5b78;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.application-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #d9deea;
+  border-radius: 0.75rem;
+  background: #ffffff;
+}
+
+.application-table caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.application-table th,
+.application-table td {
+  border-bottom: 1px solid #e6eaf2;
+  padding: 0.875rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.application-table th {
+  color: #33415f;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.application-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.application-table a {
+  color: #102f9f;
+  font-weight: 700;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #c8d0df;
+  border-radius: 999px;
+  background: #f7f8fb;
+  color: #172033;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.35rem 0.6rem;
+}
