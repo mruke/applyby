@@ -79,7 +79,7 @@ The project is planned as a sequence of focused implementation steps.
 | 13 | Contact maintenance workflows | Add contact editing and removal workflows. | Planned |
 | 14 | Document metadata maintenance workflows | Add document metadata editing and removal workflows. File upload/storage remains deferred. | Planned |
 | 15 | Reminder maintenance workflows | Add reminder editing and canceling workflows. Keep reminder completion as a separate workflow. | Planned |
-| 16 | Application removal policy | Prefer archive/status workflow first and defer hard delete because it affects reminders, contacts, documents, and activity history. | Deferred |
+| 16 | Application removal policy | Decide and implement the intended application removal behavior, including how it should affect reminders, contacts, documents, and activity history. | Planned |
 
 ## Current CRUD Coverage
 
@@ -87,7 +87,7 @@ ApplyBy currently supports the core local CRM workflow, but it is not yet full C
 
 | Area | Create | Read | Update | Delete / Remove | Current gap |
 |---|---:|---:|---:|---:|---|
-| Applications | Yes | Yes | Partial | Partial | Details can be created/read; status can be updated; general detail editing is planned. Archiving is available through status. Hard delete is deferred. |
+| Applications | Yes | Yes | Partial | Partial | Details can be created/read; status can be updated; general detail editing is planned. Application removal behavior still needs an explicit product decision. |
 | Reminders | Yes | Yes | Partial | No | Reminders can be scheduled/read/completed; editing and canceling are planned. |
 | Contacts | Yes | Yes | No | No | Contacts can be added/read; editing and removal are planned. |
 | Document metadata | Yes | Yes | No | No | Document metadata can be added/read; editing and removal are planned. |
