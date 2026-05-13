@@ -4,8 +4,16 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { getActivityEvents } from "../api/activity";
 import { getApplicationById, updateApplicationStatus } from "../api/applications";
+import { addContact, getContacts } from "../api/contacts";
+import { addDocument, getDocuments } from "../api/documents";
 import { completeReminder, getReminders, scheduleReminder } from "../api/reminders";
-import type { ActivityEventsResponse, ApplicationResponse, RemindersResponse } from "../types/application";
+import type {
+  ActivityEventsResponse,
+  ApplicationResponse,
+  ContactsResponse,
+  DocumentsResponse,
+  RemindersResponse
+} from "../types/application";
 import { ApplicationDetailPage } from "./ApplicationDetailPage";
 
 vi.mock("../api/activity", () => ({
@@ -15,6 +23,16 @@ vi.mock("../api/activity", () => ({
 vi.mock("../api/applications", () => ({
   getApplicationById: vi.fn(),
   updateApplicationStatus: vi.fn()
+}));
+
+vi.mock("../api/contacts", () => ({
+  addContact: vi.fn(),
+  getContacts: vi.fn()
+}));
+
+vi.mock("../api/documents", () => ({
+  addDocument: vi.fn(),
+  getDocuments: vi.fn()
 }));
 
 vi.mock("../api/reminders", () => ({
@@ -43,6 +61,34 @@ const mockedGetApplicationById = vi.mocked(getApplicationById);
  * Provides typed access to the mocked status update API function.
  */
 const mockedUpdateApplicationStatus = vi.mocked(updateApplicationStatus);
+
+/**
+ * mockedAddContact
+ *
+ * Provides typed access to the mocked add contact API function.
+ */
+const mockedAddContact = vi.mocked(addContact);
+
+/**
+ * mockedGetContacts
+ *
+ * Provides typed access to the mocked contact list API function.
+ */
+const mockedGetContacts = vi.mocked(getContacts);
+
+/**
+ * mockedAddDocument
+ *
+ * Provides typed access to the mocked add document API function.
+ */
+const mockedAddDocument = vi.mocked(addDocument);
+
+/**
+ * mockedGetDocuments
+ *
+ * Provides typed access to the mocked document list API function.
+ */
+const mockedGetDocuments = vi.mocked(getDocuments);
 
 /**
  * mockedCompleteReminder
@@ -121,6 +167,44 @@ function buildActivityResponse(): ActivityEventsResponse {
 }
 
 /**
+ * buildContactsResponse
+ *
+ * Creates a contacts response for detail page tests.
+ */
+function buildContactsResponse(): ContactsResponse {
+  return {
+    contacts: [
+      {
+        id: "contact-001",
+        application_id: "app-001",
+        name: "Sam Recruiter",
+        email: "sam@example.com",
+        role: "Recruiter"
+      }
+    ]
+  };
+}
+
+/**
+ * buildDocumentsResponse
+ *
+ * Creates a documents response for detail page tests.
+ */
+function buildDocumentsResponse(): DocumentsResponse {
+  return {
+    documents: [
+      {
+        id: "doc-001",
+        application_id: "app-001",
+        name: "Backend Resume",
+        kind: "resume",
+        path: "documents/backend-resume.pdf"
+      }
+    ]
+  };
+}
+
+/**
  * renderDetailPage
  *
  * Renders the application detail page at a route with an application id.
@@ -144,12 +228,18 @@ function mockSuccessfulDetailLoad() {
   mockedGetApplicationById.mockResolvedValue(buildApplication());
   mockedGetReminders.mockResolvedValue(buildRemindersResponse());
   mockedGetActivityEvents.mockResolvedValue(buildActivityResponse());
+  mockedGetContacts.mockResolvedValue(buildContactsResponse());
+  mockedGetDocuments.mockResolvedValue(buildDocumentsResponse());
 }
 
 beforeEach(() => {
+  mockedAddContact.mockReset();
+  mockedAddDocument.mockReset();
   mockedCompleteReminder.mockReset();
   mockedGetActivityEvents.mockReset();
   mockedGetApplicationById.mockReset();
+  mockedGetContacts.mockReset();
+  mockedGetDocuments.mockReset();
   mockedGetReminders.mockReset();
   mockedScheduleReminder.mockReset();
   mockedUpdateApplicationStatus.mockReset();
@@ -164,7 +254,7 @@ describe("ApplicationDetailPage", () => {
     expect(screen.getByText("Loading application...")).toBeInTheDocument();
   });
 
-  test("renders application details, reminders, and activity", async () => {
+  test("renders application details, reminders, activity, contacts, and documents", async () => {
     mockSuccessfulDetailLoad();
 
     renderDetailPage();
@@ -175,6 +265,8 @@ describe("ApplicationDetailPage", () => {
     expect(screen.getByText("Applied with backend resume.")).toBeInTheDocument();
     expect(screen.getByText("Follow up with recruiter")).toBeInTheDocument();
     expect(screen.getByText("Status changed from applied to interviewing.")).toBeInTheDocument();
+    expect(screen.getByText("Sam Recruiter")).toBeInTheDocument();
+    expect(screen.getByText("Backend Resume")).toBeInTheDocument();
   });
 
   test("shows a not found state when the application does not exist", async () => {
@@ -278,5 +370,71 @@ describe("ApplicationDetailPage", () => {
     });
 
     expect(await screen.findByRole("status")).toHaveTextContent("Reminder completed.");
+  });
+
+  test("adds a contact", async () => {
+    mockSuccessfulDetailLoad();
+    mockedAddContact.mockResolvedValue(buildContactsResponse().contacts[0]);
+
+    renderDetailPage();
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Backend Developer" })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Sam Recruiter" }
+    });
+
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "sam@example.com" }
+    });
+
+    fireEvent.change(screen.getByLabelText("Role"), {
+      target: { value: "Recruiter" }
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Add contact" }));
+
+    await waitFor(() => {
+      expect(mockedAddContact).toHaveBeenCalledWith("app-001", {
+        name: "Sam Recruiter",
+        email: "sam@example.com",
+        role: "Recruiter"
+      });
+    });
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Contact added.");
+  });
+
+  test("adds document metadata", async () => {
+    mockSuccessfulDetailLoad();
+    mockedAddDocument.mockResolvedValue(buildDocumentsResponse().documents[0]);
+
+    renderDetailPage();
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Backend Developer" })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Document name"), {
+      target: { value: "Backend Resume" }
+    });
+
+    fireEvent.change(screen.getByLabelText("Kind"), {
+      target: { value: "resume" }
+    });
+
+    fireEvent.change(screen.getByLabelText("Path or reference"), {
+      target: { value: "documents/backend-resume.pdf" }
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Add document" }));
+
+    await waitFor(() => {
+      expect(mockedAddDocument).toHaveBeenCalledWith("app-001", {
+        name: "Backend Resume",
+        kind: "resume",
+        path: "documents/backend-resume.pdf"
+      });
+    });
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Document metadata added.");
   });
 });

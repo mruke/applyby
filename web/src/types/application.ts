@@ -156,6 +156,29 @@ export type ContactsResponse = {
 };
 
 /**
+ * CreateContactFormValues
+ *
+ * Represents user-entered values from the add contact form.
+ */
+export type CreateContactFormValues = {
+  name: string;
+  email: string;
+  role: string;
+};
+
+/**
+ * CreateContactRequest
+ *
+ * Represents the backend request body for adding an application contact.
+ */
+export type CreateContactRequest = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+};
+
+/**
  * DocumentResponse
  *
  * Represents one document metadata record returned by the backend API.
@@ -175,4 +198,27 @@ export type DocumentResponse = {
  */
 export type DocumentsResponse = {
   documents: DocumentResponse[];
+};
+
+/**
+ * CreateDocumentFormValues
+ *
+ * Represents user-entered values from the add document metadata form.
+ */
+export type CreateDocumentFormValues = {
+  name: string;
+  kind: string;
+  path: string;
+};
+
+/**
+ * CreateDocumentRequest
+ *
+ * Represents the backend request body for adding document metadata.
+ */
+export type CreateDocumentRequest = {
+  id: string;
+  name: string;
+  kind: string;
+  path: string;
 };
