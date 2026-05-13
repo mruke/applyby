@@ -4,7 +4,7 @@ ApplyBy is a full-stack personal job application CRM.
 
 The project is intended to be both a practical job-search tool and a portfolio project focused on disciplined application design, clear domain modeling, validated workflows, persistence design, search/filtering, reminders, analytics, and layered testing.
 
-This document follows the same lightweight architecture-documentation style used across the author's portfolio projects.
+This document follows the same lightweight architecture-documentation style used across all of my projects.
 
 ---
 
