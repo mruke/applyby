@@ -197,6 +197,61 @@ func (executor *fakeListContactsExecutor) Execute(ctx context.Context, input app
 }
 
 // -----------------------------------------------------------------------------
+// fakeUpdateContactExecutor
+//
+// Provides a fake update contact workflow for API handler tests.
+// -----------------------------------------------------------------------------
+type fakeUpdateContactExecutor struct {
+	contact domain.Contact
+	input   application.UpdateContactInput
+	err     error
+	called  bool
+}
+
+// -----------------------------------------------------------------------------
+// Execute
+//
+// Records update contact workflow execution and returns the configured fake result.
+// -----------------------------------------------------------------------------
+func (executor *fakeUpdateContactExecutor) Execute(ctx context.Context, input application.UpdateContactInput) (domain.Contact, error) {
+	executor.called = true
+	executor.input = input
+
+	if executor.err != nil {
+		return domain.Contact{}, executor.err
+	}
+
+	return executor.contact, nil
+}
+
+// -----------------------------------------------------------------------------
+// fakeRemoveContactExecutor
+//
+// Provides a fake remove contact workflow for API handler tests.
+// -----------------------------------------------------------------------------
+type fakeRemoveContactExecutor struct {
+	input  application.RemoveContactInput
+	err    error
+	called bool
+}
+
+// -----------------------------------------------------------------------------
+// Execute
+//
+// Records remove contact workflow execution and returns the configured fake result.
+// -----------------------------------------------------------------------------
+func (executor *fakeRemoveContactExecutor) Execute(ctx context.Context, input application.RemoveContactInput) error {
+	executor.called = true
+	executor.input = input
+
+	if executor.err != nil {
+		return executor.err
+	}
+
+	return nil
+}
+
+// -----------------------------------------------------------------------------
 // fakeAddDocumentExecutor
 //
 // Provides a fake add document workflow for API handler tests.
@@ -433,6 +488,73 @@ func TestHandleApplicationWorkflowAddsAndListsContacts(t *testing.T) {
 
 	if !addExecutor.called || !listExecutor.called {
 		t.Fatal("expected contact workflows to be called")
+	}
+}
+
+// -----------------------------------------------------------------------------
+// TestHandleApplicationWorkflowUpdatesContact
+//
+// Verifies that PATCH /applications/{id}/contacts/{contactId} updates a contact.
+// -----------------------------------------------------------------------------
+func TestHandleApplicationWorkflowUpdatesContact(t *testing.T) {
+	contact, err := domain.NewContact("contact-001", "app-001", "Sam Hiring", "sam.hiring@example.com", "Hiring Manager")
+	if err != nil {
+		t.Fatalf("failed to create contact: %v", err)
+	}
+
+	updateExecutor := &fakeUpdateContactExecutor{contact: contact}
+	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{UpdateContact: updateExecutor})
+
+	request := httptest.NewRequest(
+		http.MethodPatch,
+		"/applications/app-001/contacts/contact-001",
+		strings.NewReader(`{"name":"Sam Hiring","email":"sam.hiring@example.com","role":"Hiring Manager"}`),
+	)
+	response := httptest.NewRecorder()
+
+	if !handlers.HandleApplicationWorkflow(response, request) {
+		t.Fatal("expected workflow handler to route contact update request")
+	}
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, response.Code)
+	}
+
+	if !updateExecutor.called {
+		t.Fatal("expected update contact workflow to be called")
+	}
+
+	if updateExecutor.input.ApplicationID != "app-001" || updateExecutor.input.ContactID != "contact-001" {
+		t.Fatalf("expected application and contact ids to be preserved")
+	}
+}
+
+// -----------------------------------------------------------------------------
+// TestHandleApplicationWorkflowRemovesContact
+//
+// Verifies that DELETE /applications/{id}/contacts/{contactId} removes a contact.
+// -----------------------------------------------------------------------------
+func TestHandleApplicationWorkflowRemovesContact(t *testing.T) {
+	removeExecutor := &fakeRemoveContactExecutor{}
+	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{RemoveContact: removeExecutor})
+
+	request := httptest.NewRequest(http.MethodDelete, "/applications/app-001/contacts/contact-001", nil)
+	response := httptest.NewRecorder()
+
+	if !handlers.HandleApplicationWorkflow(response, request) {
+		t.Fatal("expected workflow handler to route contact remove request")
+	}
+
+	if response.Code != http.StatusNoContent {
+		t.Fatalf("expected status %d, got %d", http.StatusNoContent, response.Code)
+	}
+
+	if !removeExecutor.called {
+		t.Fatal("expected remove contact workflow to be called")
+	}
+
+	if removeExecutor.input.ApplicationID != "app-001" || removeExecutor.input.ContactID != "contact-001" {
+		t.Fatalf("expected application and contact ids to be preserved")
 	}
 }
 

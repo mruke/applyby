@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { getActivityEvents } from "../api/activity";
 import { getApplicationById, updateApplicationStatus } from "../api/applications";
-import { addContact, getContacts } from "../api/contacts";
+import { addContact, getContacts, removeContact } from "../api/contacts";
 import { addDocument, getDocuments } from "../api/documents";
 import { completeReminder, getReminders, scheduleReminder } from "../api/reminders";
 import type {
@@ -27,7 +27,8 @@ vi.mock("../api/applications", () => ({
 
 vi.mock("../api/contacts", () => ({
   addContact: vi.fn(),
-  getContacts: vi.fn()
+  getContacts: vi.fn(),
+  removeContact: vi.fn()
 }));
 
 vi.mock("../api/documents", () => ({
@@ -75,6 +76,13 @@ const mockedAddContact = vi.mocked(addContact);
  * Provides typed access to the mocked contact list API function.
  */
 const mockedGetContacts = vi.mocked(getContacts);
+
+// -----------------------------------------------------------------------------
+// mockedRemoveContact
+//
+// Provides typed access to the mocked remove contact API function.
+// -----------------------------------------------------------------------------
+const mockedRemoveContact = vi.mocked(removeContact);
 
 /**
  * mockedAddDocument
@@ -239,6 +247,7 @@ beforeEach(() => {
   mockedGetActivityEvents.mockReset();
   mockedGetApplicationById.mockReset();
   mockedGetContacts.mockReset();
+  mockedRemoveContact.mockReset();
   mockedGetDocuments.mockReset();
   mockedGetReminders.mockReset();
   mockedScheduleReminder.mockReset();
@@ -407,6 +416,23 @@ describe("ApplicationDetailPage", () => {
     });
 
     expect(await screen.findByRole("status")).toHaveTextContent("Contact added.");
+  });
+
+  test("removes a contact", async () => {
+    mockSuccessfulDetailLoad();
+    mockedRemoveContact.mockResolvedValue(undefined);
+
+    renderDetailPage();
+
+    expect(await screen.findByText("Sam Recruiter")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+
+    await waitFor(() => {
+      expect(mockedRemoveContact).toHaveBeenCalledWith("app-001", "contact-001");
+    });
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Contact removed.");
   });
 
   test("adds document metadata", async () => {

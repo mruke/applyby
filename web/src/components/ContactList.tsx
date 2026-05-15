@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import type { ContactResponse } from "../types/application";
 
 /**
@@ -6,7 +8,10 @@ import type { ContactResponse } from "../types/application";
  * Defines the contacts rendered by the contact list component.
  */
 type ContactListProps = {
+  applicationId: string;
   contacts: ContactResponse[];
+  isRemoving?: boolean;
+  onRemove?: (contactId: string) => Promise<void>;
 };
 
 /**
@@ -14,7 +19,7 @@ type ContactListProps = {
  *
  * Renders application contacts in a readable list.
  */
-export function ContactList({ contacts }: ContactListProps) {
+export function ContactList({ applicationId, contacts, isRemoving = false, onRemove }: ContactListProps) {
   if (contacts.length === 0) {
     return (
       <section className="state-card" aria-labelledby="contacts-heading">
@@ -37,6 +42,18 @@ export function ContactList({ contacts }: ContactListProps) {
                 {contact.role || "Role not specified"}
                 {contact.email ? ` · ${contact.email}` : ""}
               </p>
+            </div>
+
+            <div className="stack-list__actions">
+              <Link className="secondary-button" to={`/applications/${applicationId}/contacts/${contact.id}/edit`}>
+                Edit
+              </Link>
+
+              {onRemove ? (
+                <button type="button" disabled={isRemoving} onClick={() => void onRemove(contact.id)}>
+                  {isRemoving ? "Removing..." : "Remove"}
+                </button>
+              ) : null}
             </div>
           </li>
         ))}
