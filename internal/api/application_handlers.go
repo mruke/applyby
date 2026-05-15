@@ -57,6 +57,15 @@ type updateApplicationStatusExecutor interface {
 }
 
 // -----------------------------------------------------------------------------
+// removeApplicationExecutor
+//
+// Defines the application behavior needed by the remove application handler.
+// -----------------------------------------------------------------------------
+type removeApplicationExecutor interface {
+	Execute(ctx context.Context, input application.RemoveApplicationInput) error
+}
+
+// -----------------------------------------------------------------------------
 // ApplicationHandlers
 //
 // Groups HTTP handlers for application-related API workflows.
@@ -67,6 +76,7 @@ type ApplicationHandlers struct {
 	getApplication           getApplicationExecutor
 	updateApplicationDetails updateApplicationDetailsExecutor
 	updateApplicationStatus  updateApplicationStatusExecutor
+	removeApplication        removeApplicationExecutor
 }
 
 // -----------------------------------------------------------------------------
@@ -80,14 +90,21 @@ func NewApplicationHandlers(
 	getApplication getApplicationExecutor,
 	updateApplicationDetails updateApplicationDetailsExecutor,
 	updateApplicationStatus updateApplicationStatusExecutor,
+	removeApplication ...removeApplicationExecutor,
 ) ApplicationHandlers {
-	return ApplicationHandlers{
+	handlers := ApplicationHandlers{
 		createApplication:        createApplication,
 		listApplications:         listApplications,
 		getApplication:           getApplication,
 		updateApplicationDetails: updateApplicationDetails,
 		updateApplicationStatus:  updateApplicationStatus,
 	}
+
+	if len(removeApplication) > 0 {
+		handlers.removeApplication = removeApplication[0]
+	}
+
+	return handlers
 }
 
 // -----------------------------------------------------------------------------
@@ -134,6 +151,14 @@ func (handlers ApplicationHandlers) HandleApplicationResource(response http.Resp
 		}
 
 		handlers.handleUpdateApplicationDetails(response, request, id)
+	case http.MethodDelete:
+		id, ok := applicationIDFromDetailPath(request.URL.Path)
+		if !ok {
+			writeJSON(response, http.StatusNotFound, errorResponse{Error: "route not found"})
+			return
+		}
+
+		handlers.handleRemoveApplication(response, request, id)
 	default:
 		writeJSON(response, http.StatusMethodNotAllowed, errorResponse{Error: "method not allowed"})
 	}
@@ -295,6 +320,25 @@ func (handlers ApplicationHandlers) handleUpdateApplicationStatus(response http.
 	}
 
 	writeJSON(response, http.StatusOK, applicationToResponse(updatedApplication))
+}
+
+// -----------------------------------------------------------------------------
+// handleRemoveApplication
+//
+// Executes the remove application workflow.
+// -----------------------------------------------------------------------------
+func (handlers ApplicationHandlers) handleRemoveApplication(response http.ResponseWriter, request *http.Request, id domain.ApplicationID) {
+	if handlers.removeApplication == nil {
+		writeJSON(response, http.StatusInternalServerError, errorResponse{Error: "remove application service is not configured"})
+		return
+	}
+
+	if err := handlers.removeApplication.Execute(request.Context(), application.RemoveApplicationInput{ID: id}); err != nil {
+		writeJSON(response, http.StatusBadRequest, errorResponse{Error: err.Error()})
+		return
+	}
+
+	response.WriteHeader(http.StatusNoContent)
 }
 
 // -----------------------------------------------------------------------------

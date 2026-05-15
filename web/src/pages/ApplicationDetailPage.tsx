@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { getActivityEvents } from "../api/activity";
-import { getApplicationById, updateApplicationStatus } from "../api/applications";
+import { getApplicationById, removeApplication, updateApplicationStatus } from "../api/applications";
 import { addContact, getContacts, removeContact } from "../api/contacts";
 import { addDocument, getDocuments, removeDocument } from "../api/documents";
 import { completeReminder, getReminders, removeReminder, scheduleReminder } from "../api/reminders";
@@ -220,6 +220,7 @@ function applyDetailData(
  * contacts, document metadata, and activity history.
  */
 export function ApplicationDetailPage() {
+  const navigate = useNavigate();
   const { applicationId } = useParams<{ applicationId: string }>();
 
   const [state, setState] = useState<ApplicationDetailPageState>({
@@ -332,6 +333,42 @@ export function ApplicationDetailPage() {
         ...currentState,
         errorMessage: "Status could not be updated. Check the selected status and try again.",
         isSubmittingStatus: false,
+        successMessage: null
+      }));
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // handleRemoveApplication
+  //
+  // Confirms and removes the current application, then returns to the application list.
+  // ---------------------------------------------------------------------------
+  async function handleRemoveApplication() {
+    if (!state.application) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Remove this application? This also removes related reminders, contacts, documents, and activity history."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setState((currentState) => ({
+      ...currentState,
+      errorMessage: null,
+      successMessage: null
+    }));
+
+    try {
+      await removeApplication(state.application.id);
+      void navigate("/applications");
+    } catch {
+      setState((currentState) => ({
+        ...currentState,
+        errorMessage: "Application could not be removed. Try again.",
         successMessage: null
       }));
     }
@@ -659,9 +696,15 @@ export function ApplicationDetailPage() {
           </dl>
         </article>
 
-        <Link className="secondary-button" to={`/applications/${state.application.id}/edit`}>
-          Edit application
-        </Link>
+        <div className="form-actions">
+          <Link className="secondary-button" to={`/applications/${state.application.id}/edit`}>
+            Edit application
+          </Link>
+
+          <button type="button" onClick={() => void handleRemoveApplication()}>
+            Remove application
+          </button>
+        </div>
 
         <StatusUpdateForm
           currentStatus={state.application.status}

@@ -61,6 +61,7 @@ func run() error {
 		application.NewGetApplicationService(repository),
 		application.NewUpdateApplicationDetailsService(repository, repository),
 		application.NewUpdateApplicationStatusService(repository, repository),
+		application.NewRemoveApplicationService(repository),
 	)
 
 	workflowHandlers := api.NewWorkflowHandlers(api.WorkflowHandlerDependencies{

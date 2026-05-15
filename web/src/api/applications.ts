@@ -151,3 +151,13 @@ export async function updateApplicationStatus(
     body: { status }
   });
 }
+// -----------------------------------------------------------------------------
+// removeApplication
+//
+// Removes one application through the backend API.
+// -----------------------------------------------------------------------------
+export async function removeApplication(applicationId: string): Promise<void> {
+  return apiClient.request<void>(endpoints.applicationDetail(applicationId), {
+    method: "DELETE"
+  });
+}
