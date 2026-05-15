@@ -55,11 +55,11 @@ func TestUpdateApplicationStatusServiceSavesAllowedTransition(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
-// TestUpdateApplicationStatusServiceRejectsInvalidTransition
+// TestUpdateApplicationStatusServiceAllowsCorrectiveTransition
 //
-// Verifies that the status workflow rejects unsupported lifecycle movement.
+// Verifies that the status workflow allows corrective lifecycle movement.
 // -----------------------------------------------------------------------------
-func TestUpdateApplicationStatusServiceRejectsInvalidTransition(t *testing.T) {
+func TestUpdateApplicationStatusServiceAllowsCorrectiveTransition(t *testing.T) {
 	repository := newFakeApplicationRepository()
 	historyRepository := &fakeApplicationHistoryRepository{}
 	service := NewUpdateApplicationStatusService(repository, historyRepository)
@@ -77,25 +77,28 @@ func TestUpdateApplicationStatusServiceRejectsInvalidTransition(t *testing.T) {
 
 	repository.applications[application.ID] = application
 
-	_, err = service.Execute(context.Background(), UpdateApplicationStatusInput{
+	updatedApplication, err := service.Execute(context.Background(), UpdateApplicationStatusInput{
 		ID:     "app-001",
 		Status: domain.StatusInterviewing,
 	})
-
-	if err == nil {
-		t.Fatal("expected invalid status transition to be rejected")
+	if err != nil {
+		t.Fatalf("expected corrective status transition to succeed: %v", err)
 	}
 
-	if repository.saveCalls != 0 {
-		t.Fatal("expected invalid status transition not to be saved")
+	if updatedApplication.Status != domain.StatusInterviewing {
+		t.Fatalf("expected application status to be updated")
 	}
 
-	if len(historyRepository.statusHistory) != 0 {
-		t.Fatal("expected invalid status transition not to record status history")
+	if repository.saveCalls != 1 {
+		t.Fatal("expected corrective status transition to be saved")
 	}
 
-	if len(historyRepository.activityEvents) != 0 {
-		t.Fatal("expected invalid status transition not to record activity events")
+	if len(historyRepository.statusHistory) != 1 {
+		t.Fatal("expected corrective status transition to record status history")
+	}
+
+	if len(historyRepository.activityEvents) != 1 {
+		t.Fatal("expected corrective status transition to record activity event")
 	}
 }
 

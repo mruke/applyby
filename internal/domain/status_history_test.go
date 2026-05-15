@@ -38,15 +38,15 @@ func TestNewApplicationStatusHistoryRejectsMissingApplicationID(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
-// TestNewApplicationStatusHistoryRejectsInvalidTransition
+// TestNewApplicationStatusHistoryAcceptsCorrectiveTransition
 //
-// Verifies that status history cannot record unsupported lifecycle movement.
+// Verifies that status history can record corrective lifecycle movement.
 // -----------------------------------------------------------------------------
-func TestNewApplicationStatusHistoryRejectsInvalidTransition(t *testing.T) {
+func TestNewApplicationStatusHistoryAcceptsCorrectiveTransition(t *testing.T) {
 	_, err := NewApplicationStatusHistory("app-001", StatusRejected, StatusInterviewing, time.Now())
 
-	if err == nil {
-		t.Fatal("expected invalid status transition to be rejected")
+	if err != nil {
+		t.Fatalf("expected corrective status transition to be accepted: %v", err)
 	}
 }
 

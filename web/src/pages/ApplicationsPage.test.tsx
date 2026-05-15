@@ -116,6 +116,16 @@ describe("ApplicationsPage", () => {
     expect(await screen.findByRole("heading", { level: 2, name: "No applications yet" })).toBeInTheDocument();
   });
 
+  test("renders the split creation and list workspace", async () => {
+    mockedGetApplications.mockResolvedValue(buildApplicationsResponse());
+
+    const { container } = renderApplicationsPage();
+
+    expect(await screen.findByRole("heading", { level: 2, name: "Add application" })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 2, name: "Tracked applications" }).length).toBeGreaterThan(0);
+    expect(container.querySelector(".applications-workspace")).toBeInTheDocument();
+  });
+
   test("renders loaded applications", async () => {
     mockedGetApplications.mockResolvedValue(buildApplicationsResponse());
 
