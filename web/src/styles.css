@@ -23,15 +23,15 @@
   --color-purple: #cc79a7;
   --color-black: #000000;
 
-  --color-primary: #005f95;
-  --color-primary-hover: #004c78;
+  --color-primary: #006a5b;
+  --color-primary-hover: #004f44;
   --color-danger: #a94400;
   --color-danger-hover: #7f3300;
   --color-success-text: #005b42;
   --color-success-bg: #e5f4ee;
   --color-error-text: #7f3300;
   --color-error-bg: #fff2e8;
-  --color-focus: #0072b2;
+  --color-focus: #009e73;
 
   --shadow-card: 0 1px 2px rgb(27 27 27 / 0.06), 0 8px 24px rgb(27 27 27 / 0.06);
   --radius-card: 0.85rem;
@@ -47,7 +47,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgb(86 180 233 / 0.18), transparent 28rem),
+    radial-gradient(circle at top left, rgb(0 158 115 / 0.16), transparent 28rem),
     var(--color-page);
 }
 
@@ -214,7 +214,7 @@ textarea:focus-visible {
 }
 
 .application-table tbody tr:hover {
-  background: rgb(86 180 233 / 0.12);
+  background: rgb(0 158 115 / 0.10);
 }
 
 .application-table a {
@@ -243,8 +243,8 @@ textarea:focus-visible {
 
 .status-badge--interested {
   border-color: #0072b2;
-  background: #e8f4fb;
-  color: #004c78;
+  background: #e5f4ee;
+  color: #005b42;
 }
 
 .status-badge--applied {
@@ -321,6 +321,7 @@ textarea:focus-visible {
   flex-wrap: wrap;
   gap: 0.75rem;
   justify-content: flex-start;
+  margin-top: 0.35rem;
 }
 
 .form-actions button,
@@ -358,7 +359,7 @@ textarea:focus-visible {
 
 .secondary-button:hover,
 .stack-list__actions a:hover {
-  background: #e8f4fb !important;
+  background: #e5f4ee !important;
 }
 
 .danger-button,
@@ -460,7 +461,7 @@ textarea:focus-visible {
 }
 
 .stack-list__item button:hover {
-  background: #e8f4fb;
+  background: #e5f4ee;
 }
 
 .stack-list__item button:disabled {
@@ -489,11 +490,15 @@ textarea:focus-visible {
   gap: 0.75rem;
 }
 
+.search-form .form-actions {
+  margin-top: 0.55rem;
+}
+
 .active-filter-summary {
-  border: 1px solid var(--color-sky);
+  border: 1px solid var(--color-green);
   border-radius: var(--radius-control);
-  background: #e8f4fb;
-  color: #004c78;
+  background: #e5f4ee;
+  color: #005b42;
   font-weight: 800;
   margin: 0 0 1rem;
   padding: 0.75rem;
@@ -543,7 +548,7 @@ textarea:focus-visible {
 
 @media (min-width: 980px) {
   .applications-workspace {
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    grid-template-columns: minmax(20rem, 0.72fr) minmax(0, 1.28fr);
     align-items: start;
   }
 
