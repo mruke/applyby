@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 
 import { getActivityEvents } from "../api/activity";
 import { getApplicationById, updateApplicationStatus } from "../api/applications";
-import { addContact, getContacts } from "../api/contacts";
+import { addContact, getContacts, removeContact } from "../api/contacts";
 import { addDocument, getDocuments } from "../api/documents";
 import { completeReminder, getReminders, scheduleReminder } from "../api/reminders";
 import { ActivityTimeline } from "../components/ActivityTimeline";
@@ -58,6 +58,7 @@ type ApplicationDetailPageState = {
   isAddingDocument: boolean;
   isCompletingReminder: boolean;
   isLoading: boolean;
+  isRemovingContact: boolean;
   isSubmittingReminder: boolean;
   isSubmittingStatus: boolean;
   reminders: ReminderResponse[];
@@ -232,6 +233,7 @@ export function ApplicationDetailPage() {
     isAddingDocument: false,
     isCompletingReminder: false,
     isLoading: true,
+    isRemovingContact: false,
     isSubmittingReminder: false,
     isSubmittingStatus: false,
     reminders: [],
@@ -438,6 +440,42 @@ export function ApplicationDetailPage() {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // handleRemoveContact
+  //
+  // Removes a contact, refreshes detail data, and displays feedback.
+  // ---------------------------------------------------------------------------
+  async function handleRemoveContact(contactId: string) {
+    if (!applicationId) {
+      return;
+    }
+
+    setState((currentState) => ({
+      ...currentState,
+      errorMessage: null,
+      isRemovingContact: true,
+      successMessage: null
+    }));
+
+    try {
+      await removeContact(applicationId, contactId);
+      await loadDetailData();
+
+      setState((currentState) => ({
+        ...currentState,
+        isRemovingContact: false,
+        successMessage: "Contact removed."
+      }));
+    } catch {
+      setState((currentState) => ({
+        ...currentState,
+        errorMessage: "Contact could not be removed. Try again.",
+        isRemovingContact: false,
+        successMessage: null
+      }));
+    }
+  }
+
   /**
    * handleAddDocument
    *
@@ -594,7 +632,12 @@ export function ApplicationDetailPage() {
             </p>
           </section>
         ) : (
-          <ContactList contacts={state.contacts} />
+          <ContactList
+            applicationId={state.application.id}
+            contacts={state.contacts}
+            isRemoving={state.isRemovingContact}
+            onRemove={handleRemoveContact}
+          />
         )}
 
         <DocumentForm isSubmitting={state.isAddingDocument} onSubmit={handleAddDocument} />

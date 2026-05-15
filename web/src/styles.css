@@ -332,6 +332,22 @@ textarea:focus-visible {
   opacity: 0.65;
 }
 
+.stack-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.stack-list__actions a {
+  border: 1px solid #b7c1d3;
+  border-radius: 0.5rem;
+  color: #102f9f;
+  font-weight: 700;
+  padding: 0.55rem 0.75rem;
+  text-decoration: none;
+}
+
 .timeline-list li {
   border-top: 1px solid #e6eaf2;
   padding-top: 0.875rem;

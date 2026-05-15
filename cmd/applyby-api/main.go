@@ -71,6 +71,8 @@ func run() error {
 		CompleteReminder:   application.NewCompleteReminderService(repository, repository),
 		AddContact:         application.NewAddContactService(repository, repository),
 		ListContacts:       application.NewListContactsService(repository),
+		UpdateContact:      application.NewUpdateContactService(repository, repository),
+		RemoveContact:      application.NewRemoveContactService(repository, repository),
 		AddDocument:        application.NewAddDocumentService(repository, repository),
 		ListDocuments:      application.NewListDocumentsService(repository),
 	})
@@ -141,7 +143,7 @@ func allowLocalDevelopmentCORS(next http.Handler) http.Handler {
 		if origin == "http://localhost:5173" || origin == "http://127.0.0.1:5173" {
 			response.Header().Set("Access-Control-Allow-Origin", origin)
 			response.Header().Set("Vary", "Origin")
-			response.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS")
+			response.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
 			response.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		}
 

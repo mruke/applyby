@@ -216,6 +216,28 @@ export type CreateContactRequest = {
   role: string;
 };
 
+// -----------------------------------------------------------------------------
+// UpdateContactFormValues
+//
+// Represents editable values from the contact edit form.
+// -----------------------------------------------------------------------------
+export type UpdateContactFormValues = {
+  name: string;
+  email: string;
+  role: string;
+};
+
+// -----------------------------------------------------------------------------
+// UpdateContactRequest
+//
+// Represents the backend request body for editing an application contact.
+// -----------------------------------------------------------------------------
+export type UpdateContactRequest = {
+  name: string;
+  email: string;
+  role: string;
+};
+
 /**
  * DocumentResponse
  *

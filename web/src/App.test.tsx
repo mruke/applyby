@@ -27,7 +27,19 @@ vi.mock("./api/applications", () => ({
 
 vi.mock("./api/contacts", () => ({
   addContact: vi.fn(),
-  getContacts: vi.fn().mockResolvedValue({ contacts: [] })
+  getContacts: vi.fn().mockResolvedValue({
+    contacts: [
+      {
+        id: "contact-001",
+        application_id: "app-001",
+        name: "Sam Recruiter",
+        email: "sam@example.com",
+        role: "Recruiter"
+      }
+    ]
+  }),
+  removeContact: vi.fn(),
+  updateContact: vi.fn()
 }));
 
 vi.mock("./api/documents", () => ({
@@ -78,6 +90,12 @@ describe("App", () => {
     renderRoute("/applications/app-001/edit");
 
     expect(await screen.findByRole("heading", { level: 1, name: "Edit application" })).toBeInTheDocument();
+  });
+
+  test("renders the contact edit route", async () => {
+    renderRoute("/applications/app-001/contacts/contact-001/edit");
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Edit contact" })).toBeInTheDocument();
   });
 
   test("renders the not found route", () => {

@@ -121,6 +121,16 @@ func TestContactAndDocumentRequestsConvertToInput(t *testing.T) {
 		t.Fatalf("expected contact application id to be preserved")
 	}
 
+	contactUpdateInput := contactRequest{
+		Name:  "Sam Hiring",
+		Email: "sam.hiring@example.com",
+		Role:  "Hiring Manager",
+	}.toUpdateInput("app-001", "contact-001")
+
+	if contactUpdateInput.ApplicationID != "app-001" || contactUpdateInput.ContactID != "contact-001" {
+		t.Fatalf("expected contact update identities to be preserved")
+	}
+
 	documentInput := documentRequest{
 		ID:   "doc-001",
 		Name: "Backend Resume",

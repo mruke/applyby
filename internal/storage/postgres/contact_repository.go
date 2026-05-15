@@ -52,6 +52,136 @@ func (repository ApplicationRepository) SaveContact(ctx context.Context, contact
 }
 
 // -----------------------------------------------------------------------------
+// FindContactByID
+//
+// Retrieves one contact by application and contact identity.
+// -----------------------------------------------------------------------------
+func (repository ApplicationRepository) FindContactByID(ctx context.Context, applicationID domain.ApplicationID, contactID domain.ContactID) (domain.Contact, error) {
+	if repository.db == nil {
+		return domain.Contact{}, fmt.Errorf("database connection is required")
+	}
+
+	if err := applicationID.Validate(); err != nil {
+		return domain.Contact{}, err
+	}
+
+	if err := contactID.Validate(); err != nil {
+		return domain.Contact{}, err
+	}
+
+	row := repository.db.QueryRowContext(
+		ctx,
+		`
+        SELECT
+            id,
+            application_id,
+            name,
+            email,
+            role
+        FROM contacts
+        WHERE application_id = $1
+            AND id = $2
+        `,
+		applicationID,
+		contactID,
+	)
+
+	return scanContact(row)
+}
+
+// -----------------------------------------------------------------------------
+// UpdateContact
+//
+// Updates an existing contact for an application.
+// -----------------------------------------------------------------------------
+func (repository ApplicationRepository) UpdateContact(ctx context.Context, contact domain.Contact) error {
+	if repository.db == nil {
+		return fmt.Errorf("database connection is required")
+	}
+
+	if err := contact.Validate(); err != nil {
+		return err
+	}
+
+	result, err := repository.db.ExecContext(
+		ctx,
+		`
+        UPDATE contacts
+        SET
+            name = $3,
+            email = $4,
+            role = $5,
+            updated_at = NOW()
+        WHERE application_id = $1
+            AND id = $2
+        `,
+		contact.ApplicationID,
+		contact.ID,
+		contact.Name,
+		contact.Email,
+		contact.Role,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+// -----------------------------------------------------------------------------
+// RemoveContact
+//
+// Removes one contact from an application.
+// -----------------------------------------------------------------------------
+func (repository ApplicationRepository) RemoveContact(ctx context.Context, applicationID domain.ApplicationID, contactID domain.ContactID) error {
+	if repository.db == nil {
+		return fmt.Errorf("database connection is required")
+	}
+
+	if err := applicationID.Validate(); err != nil {
+		return err
+	}
+
+	if err := contactID.Validate(); err != nil {
+		return err
+	}
+
+	result, err := repository.db.ExecContext(
+		ctx,
+		`
+        DELETE FROM contacts
+        WHERE application_id = $1
+            AND id = $2
+        `,
+		applicationID,
+		contactID,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+
+// -----------------------------------------------------------------------------
 // ListContactsForApplication
 //
 // Retrieves contacts for one application in stable name order.

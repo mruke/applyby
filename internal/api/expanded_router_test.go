@@ -43,6 +43,24 @@ func TestNewExpandedRouterRoutesApplicationWorkflow(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+// TestNewExpandedRouterRoutesApplicationContactResource
+//
+// Verifies that contact maintenance routes reach workflow handlers.
+// -----------------------------------------------------------------------------
+func TestNewExpandedRouterRoutesApplicationContactResource(t *testing.T) {
+	router := NewExpandedRouter(NewApplicationHandlers(nil, nil, nil, nil, nil), NewWorkflowHandlers(WorkflowHandlerDependencies{}))
+
+	request := httptest.NewRequest(http.MethodPatch, "/applications/app-001/contacts/contact-001", nil)
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusInternalServerError {
+		t.Fatalf("expected contact resource route to reach workflow handler, got %d", response.Code)
+	}
+}
+
+// -----------------------------------------------------------------------------
 // TestNewExpandedRouterRoutesApplicationDetail
 //
 // Verifies that the expanded router sends detail requests to application handlers.

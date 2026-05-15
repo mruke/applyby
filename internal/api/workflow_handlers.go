@@ -74,6 +74,24 @@ type listContactsExecutor interface {
 }
 
 // -----------------------------------------------------------------------------
+// updateContactExecutor
+//
+// Defines the application behavior needed by the update contact handler.
+// -----------------------------------------------------------------------------
+type updateContactExecutor interface {
+	Execute(ctx context.Context, input application.UpdateContactInput) (domain.Contact, error)
+}
+
+// -----------------------------------------------------------------------------
+// removeContactExecutor
+//
+// Defines the application behavior needed by the remove contact handler.
+// -----------------------------------------------------------------------------
+type removeContactExecutor interface {
+	Execute(ctx context.Context, input application.RemoveContactInput) error
+}
+
+// -----------------------------------------------------------------------------
 // addDocumentExecutor
 //
 // Defines the application behavior needed by the add document handler.
@@ -104,6 +122,8 @@ type WorkflowHandlers struct {
 	completeReminder   completeReminderExecutor
 	addContact         addContactExecutor
 	listContacts       listContactsExecutor
+	updateContact      updateContactExecutor
+	removeContact      removeContactExecutor
 	addDocument        addDocumentExecutor
 	listDocuments      listDocumentsExecutor
 }
@@ -121,6 +141,8 @@ type WorkflowHandlerDependencies struct {
 	CompleteReminder   completeReminderExecutor
 	AddContact         addContactExecutor
 	ListContacts       listContactsExecutor
+	UpdateContact      updateContactExecutor
+	RemoveContact      removeContactExecutor
 	AddDocument        addDocumentExecutor
 	ListDocuments      listDocumentsExecutor
 }
@@ -139,6 +161,8 @@ func NewWorkflowHandlers(dependencies WorkflowHandlerDependencies) WorkflowHandl
 		completeReminder:   dependencies.CompleteReminder,
 		addContact:         dependencies.AddContact,
 		listContacts:       dependencies.ListContacts,
+		updateContact:      dependencies.UpdateContact,
+		removeContact:      dependencies.RemoveContact,
 		addDocument:        dependencies.AddDocument,
 		listDocuments:      dependencies.ListDocuments,
 	}
@@ -214,6 +238,11 @@ func (handlers WorkflowHandlers) HandleReminderComplete(response http.ResponseWr
 // Routes application-owned workflow requests by path and method.
 // -----------------------------------------------------------------------------
 func (handlers WorkflowHandlers) HandleApplicationWorkflow(response http.ResponseWriter, request *http.Request) bool {
+	if applicationID, contactID, ok := applicationContactResourcePathParts(request.URL.Path); ok {
+		handlers.handleContactResource(response, request, applicationID, contactID)
+		return true
+	}
+
 	applicationID, resource, ok := applicationWorkflowPathParts(request.URL.Path)
 	if !ok {
 		return false
@@ -399,6 +428,87 @@ func (handlers WorkflowHandlers) handleListContacts(response http.ResponseWriter
 }
 
 // -----------------------------------------------------------------------------
+// handleContactResource
+//
+// Handles item-level contact maintenance requests for one application.
+// -----------------------------------------------------------------------------
+func (handlers WorkflowHandlers) handleContactResource(
+	response http.ResponseWriter,
+	request *http.Request,
+	applicationID domain.ApplicationID,
+	contactID domain.ContactID,
+) {
+	switch request.Method {
+	case http.MethodPatch:
+		handlers.handleUpdateContact(response, request, applicationID, contactID)
+	case http.MethodDelete:
+		handlers.handleRemoveContact(response, request, applicationID, contactID)
+	default:
+		writeJSON(response, http.StatusMethodNotAllowed, errorResponse{Error: "method not allowed"})
+	}
+}
+
+// -----------------------------------------------------------------------------
+// handleUpdateContact
+//
+// Decodes, validates, and executes the update contact workflow.
+// -----------------------------------------------------------------------------
+func (handlers WorkflowHandlers) handleUpdateContact(
+	response http.ResponseWriter,
+	request *http.Request,
+	applicationID domain.ApplicationID,
+	contactID domain.ContactID,
+) {
+	if handlers.updateContact == nil {
+		writeJSON(response, http.StatusInternalServerError, errorResponse{Error: "update contact service is not configured"})
+		return
+	}
+
+	var body contactRequest
+
+	if err := decodeJSON(request, &body); err != nil {
+		writeJSON(response, http.StatusBadRequest, errorResponse{Error: err.Error()})
+		return
+	}
+
+	contact, err := handlers.updateContact.Execute(request.Context(), body.toUpdateInput(applicationID, contactID))
+	if err != nil {
+		writeJSON(response, http.StatusBadRequest, errorResponse{Error: err.Error()})
+		return
+	}
+
+	writeJSON(response, http.StatusOK, contactToResponse(contact))
+}
+
+// -----------------------------------------------------------------------------
+// handleRemoveContact
+//
+// Executes the remove contact workflow for one application contact.
+// -----------------------------------------------------------------------------
+func (handlers WorkflowHandlers) handleRemoveContact(
+	response http.ResponseWriter,
+	request *http.Request,
+	applicationID domain.ApplicationID,
+	contactID domain.ContactID,
+) {
+	if handlers.removeContact == nil {
+		writeJSON(response, http.StatusInternalServerError, errorResponse{Error: "remove contact service is not configured"})
+		return
+	}
+
+	err := handlers.removeContact.Execute(request.Context(), application.RemoveContactInput{
+		ApplicationID: applicationID,
+		ContactID:     contactID,
+	})
+	if err != nil {
+		writeJSON(response, http.StatusBadRequest, errorResponse{Error: err.Error()})
+		return
+	}
+
+	response.WriteHeader(http.StatusNoContent)
+}
+
+// -----------------------------------------------------------------------------
 // handleDocuments
 //
 // Handles document metadata collection requests for one application.
@@ -486,6 +596,36 @@ func applicationWorkflowPathParts(path string) (domain.ApplicationID, string, bo
 	}
 
 	return applicationID, parts[1], true
+}
+
+// -----------------------------------------------------------------------------
+// applicationContactResourcePathParts
+//
+// Extracts application and contact identities from a contact maintenance route.
+// -----------------------------------------------------------------------------
+func applicationContactResourcePathParts(path string) (domain.ApplicationID, domain.ContactID, bool) {
+	if !strings.HasPrefix(path, "/applications/") {
+		return "", "", false
+	}
+
+	trimmedPath := strings.TrimPrefix(path, "/applications/")
+	parts := strings.Split(strings.Trim(trimmedPath, "/"), "/")
+
+	if len(parts) != 3 || parts[1] != "contacts" {
+		return "", "", false
+	}
+
+	applicationID, err := domain.NewApplicationID(parts[0])
+	if err != nil {
+		return "", "", false
+	}
+
+	contactID := domain.ContactID(parts[2])
+	if err := contactID.Validate(); err != nil {
+		return "", "", false
+	}
+
+	return applicationID, contactID, true
 }
 
 // -----------------------------------------------------------------------------

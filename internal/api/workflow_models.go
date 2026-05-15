@@ -172,6 +172,21 @@ func (request contactRequest) toInput(applicationID domain.ApplicationID) applic
 }
 
 // -----------------------------------------------------------------------------
+// toUpdateInput
+//
+// Converts a contact request into an update contact workflow input model.
+// -----------------------------------------------------------------------------
+func (request contactRequest) toUpdateInput(applicationID domain.ApplicationID, contactID domain.ContactID) application.UpdateContactInput {
+	return application.UpdateContactInput{
+		ApplicationID: applicationID,
+		ContactID:     contactID,
+		Name:          request.Name,
+		Email:         request.Email,
+		Role:          request.Role,
+	}
+}
+
+// -----------------------------------------------------------------------------
 // toInput
 //
 // Converts a document request into an application-layer input model.
