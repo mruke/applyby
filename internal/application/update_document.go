@@ -3,7 +3,6 @@ package application
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/mruke/applyby/internal/domain"
 )
@@ -94,18 +93,13 @@ func (service UpdateDocumentService) Execute(ctx context.Context, input UpdateDo
 	if err := service.repository.UpdateDocument(ctx, updatedDocument); err != nil {
 		return domain.Document{}, err
 	}
-
-	event, err := domain.NewActivityEvent(
+	if err := recordActivityEvent(
+		ctx,
+		service.activityRecorder,
 		updatedDocument.ApplicationID,
 		domain.ActivityDocumentUpdated,
-		time.Now().UTC(),
 		fmt.Sprintf("Document metadata updated: %s.", updatedDocument.Name),
-	)
-	if err != nil {
-		return domain.Document{}, err
-	}
-
-	if err := service.activityRecorder.RecordActivityEvent(ctx, event); err != nil {
+	); err != nil {
 		return domain.Document{}, err
 	}
 

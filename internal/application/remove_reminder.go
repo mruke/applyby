@@ -3,7 +3,6 @@ package application
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/mruke/applyby/internal/domain"
 )
@@ -75,16 +74,11 @@ func (service RemoveReminderService) Execute(ctx context.Context, input RemoveRe
 	if err := service.repository.RemoveReminder(ctx, input.ID); err != nil {
 		return err
 	}
-
-	event, err := domain.NewActivityEvent(
+	return recordActivityEvent(
+		ctx,
+		service.activityRecorder,
 		reminder.ApplicationID,
 		domain.ActivityReminderRemoved,
-		time.Now().UTC(),
 		fmt.Sprintf("Reminder removed: %s.", reminder.Title),
 	)
-	if err != nil {
-		return err
-	}
-
-	return service.activityRecorder.RecordActivityEvent(ctx, event)
 }

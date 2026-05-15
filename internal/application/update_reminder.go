@@ -84,18 +84,13 @@ func (service UpdateReminderService) Execute(ctx context.Context, input UpdateRe
 	if err := service.repository.UpdateReminder(ctx, updatedReminder); err != nil {
 		return domain.Reminder{}, err
 	}
-
-	event, err := domain.NewActivityEvent(
+	if err := recordActivityEvent(
+		ctx,
+		service.activityRecorder,
 		updatedReminder.ApplicationID,
 		domain.ActivityReminderUpdated,
-		time.Now().UTC(),
 		fmt.Sprintf("Reminder updated: %s.", updatedReminder.Title),
-	)
-	if err != nil {
-		return domain.Reminder{}, err
-	}
-
-	if err := service.activityRecorder.RecordActivityEvent(ctx, event); err != nil {
+	); err != nil {
 		return domain.Reminder{}, err
 	}
 

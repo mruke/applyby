@@ -3,7 +3,6 @@ package application
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/mruke/applyby/internal/domain"
 )
@@ -80,16 +79,11 @@ func (service RemoveDocumentService) Execute(ctx context.Context, input RemoveDo
 	if err := service.repository.RemoveDocument(ctx, input.ApplicationID, input.DocumentID); err != nil {
 		return err
 	}
-
-	event, err := domain.NewActivityEvent(
+	return recordActivityEvent(
+		ctx,
+		service.activityRecorder,
 		document.ApplicationID,
 		domain.ActivityDocumentRemoved,
-		time.Now().UTC(),
 		fmt.Sprintf("Document metadata removed: %s.", document.Name),
 	)
-	if err != nil {
-		return err
-	}
-
-	return service.activityRecorder.RecordActivityEvent(ctx, event)
 }
