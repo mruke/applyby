@@ -58,7 +58,7 @@ ApplyBy will use the initial implementation direction recorded in the accepted A
 | Persistence | PostgreSQL |
 | Frontend | React |
 | Frontend language | TypeScript |
-| Testing | Layered unit, integration, end-to-end, and helper test areas |
+| Testing | Layered tests colocated with backend packages and frontend source files |
 
 ### 2.2 Scope Constraints
 
@@ -151,7 +151,7 @@ ApplyBy is intended for one user managing their own job-search pipeline.
 
 ## 5. Container View
 
-ApplyBy is organized around four main logical containers.
+ApplyBy is organized around three runtime containers. Tests are not a runtime container; they are colocated with the source areas they verify.
 
 ```text
 +-------------------+
@@ -168,12 +168,6 @@ ApplyBy is organized around four main logical containers.
 +-------------------+
 | PostgreSQL        |
 +-------------------+
-
-+-------------------+
-| Test Suites       |
-| Unit / Integration|
-| E2E / Helpers     |
-+-------------------+
 ```
 
 ### 5.1 Containers
@@ -183,8 +177,8 @@ ApplyBy is organized around four main logical containers.
 | React Frontend | React, TypeScript | User-facing screens, forms, display state, and API calls. |
 | Go Backend API | Go | Domain behavior, application workflows, HTTP API boundaries, and coordination between layers. |
 | PostgreSQL | PostgreSQL | Durable relational storage for job-search data. |
-| Test Suites | Go test tools, frontend test tools, E2E tools | Verify behavior across layers and selected full workflows. |
 
+Testing remains layered, but the test code is not represented as a separate container. Go tests live beside the packages they verify, PostgreSQL repository tests live with the PostgreSQL adapter, and frontend tests live under `web/src`.
 ### 5.2 Important Boundary Rules
 
 | Rule | Reason |
@@ -212,58 +206,26 @@ The current architecture supports the core local CRM workflow across the main us
 
 Future maintenance work should continue to follow the existing layered design: domain validation, application service orchestration, repository persistence, thin API handlers, frontend API boundaries, and activity recording where appropriate.
 
-The exact package layout'@
-
-# ---------------------------------------------------------------------------
-# docs/FRONTEND_UX.md: keep existing principles, update current layout/screen
-# responsibilities to match the prototype.
-# ---------------------------------------------------------------------------
-
-Replace-RequiredRegex -Path "docs/FRONTEND_UX.md" -Pattern '(?s)## Layout Direction.*?(?=## Application List Expectations)' -Replacement @'
-## Layout Direction
-
-ApplyBy currently uses a simple route-based layout.
-
-Current page structure:
-
-| Page | Purpose |
-|---|---|
-| Dashboard | Show summary cards and a quick-access application list that updates when summary cards are selected. |
-| Applications | Provide the full workbench for application creation, search, filtering, and scanning. |
-| Application detail | Show one application's status, reminders, contacts, documents, and activity. |
-| Edit pages | Provide focused update workflows for application details, contacts, documents, and reminders. |
-
-Current applications page layout:
-
-```text
-Header or top navigation
-Main content area
-Applications heading
-Left pane: create application form
-Right pane: search, filters, and application table
-```
-
-The dashboard should remain summary-first. It should not duplicate the full applications workbench.
-
-The layout should be functional before it is decorative.
-The exact package layout may evolve during implementation, but the intended backend responsibilities are:
+The current backend package layout is:
 
 ```text
 cmd/
   applyby-api/
     main.go
+    wiring.go
 
 internal/
-  domain/
-  application/
-  storage/
   api/
-  search/
-  reminders/
-  analytics/
+  application/
   config/
+  domain/
+  reminders/
+  search/
+  storage/
+    postgres/
 ```
 
+Backend tests are colocated with the packages they verify as `*_test.go` files. PostgreSQL repository tests live under `internal/storage/postgres`.
 ### 6.1 Backend Building Blocks
 
 | Building Block | Responsibility | Should Not Own |
@@ -287,7 +249,7 @@ The exact frontend structure may evolve during implementation, but the intended 
 | Pages | Route-level screens such as application list, detail, and dashboard views. | Persistence logic. |
 | Components | Reusable UI pieces such as forms, tables, cards, filters, and status displays. | Lifecycle validation. |
 | Types | TypeScript models for frontend data and API responses. | Backend storage definitions. |
-| Tests | Component behavior, UI workflows, and selected E2E flows. | Backend unit coverage. |
+| Tests | Colocated component, page, and helper tests under web/src. | Backend unit coverage. |
 
 ---
 
@@ -443,13 +405,24 @@ Priority behavior should be explicit and testable rather than hidden in UI sorti
 
 Tests should verify behavior, not implementation details.
 
-| Test Type | Purpose |
-| --- | --- |
-| Unit tests | Verify domain rules, lifecycle transitions, reminder behavior, search helpers, analytics calculations, and small services. |
-| Integration tests | Verify database-backed behavior, repositories, API boundaries, and persistence workflows. |
-| End-to-end tests | Verify a small number of important user workflows once the UI exists. |
-| Test helpers | Reduce duplication without hiding test intent. |
+ApplyBy does not use a dedicated root `tests/` container. The current layout is:
 
+```text
+internal/.../*_test.go
+internal/storage/postgres/*_test.go
+web/src/**/*.test.ts
+web/src/**/*.test.tsx
+web/src/test/
+```
+
+| Test Area | Location | Purpose |
+| --- | --- | --- |
+| Backend package tests | Colocated as `*_test.go` files under `internal/` | Verify domain rules, application workflows, search helpers, reminder behavior, config, and API behavior. |
+| PostgreSQL repository tests | `internal/storage/postgres` | Verify database-backed repository behavior and persistence rules. |
+| Frontend tests | Colocated under `web/src` | Verify component behavior, page workflows, and UI interactions. |
+| Frontend test setup | `web/src/test` | Configure shared frontend test environment behavior. |
+
+Future end-to-end browser tests may be added later, but there is no current dedicated E2E test container.
 ### 9.6 Documentation
 
 Documentation should stay aligned with implementation state.
@@ -523,16 +496,3 @@ The project should demonstrate disciplined architecture and practical software e
 
 The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow. Generated data and benchmark coverage remain planned.
 
-## Testing Layout
-
-Current test layout:
-
-```text
-internal/.../*_test.go
-internal/storage/postgres/*_test.go
-web/src/**/*.test.ts
-web/src/**/*.test.tsx
-web/src/test/
-```
-
-ApplyBy does not use a dedicated root `tests/` container. Go tests are colocated with the packages they verify, PostgreSQL repository tests live with the PostgreSQL adapter, and frontend tests are colocated with React pages/components.
