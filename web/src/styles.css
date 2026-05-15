@@ -557,3 +557,60 @@ textarea:focus-visible {
     top: 1.25rem;
   }
 }
+/* -------------------------------------------------------------------------- */
+/* Large-list hardening                                                       */
+/* -------------------------------------------------------------------------- */
+
+.application-list-section {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.application-list-section .table-scroll {
+  max-height: min(34rem, 70vh);
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.application-list-section .application-table {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.application-list-section .application-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-surface);
+}
+
+.timeline-list {
+  max-height: min(28rem, 65vh);
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.state-card:has(.timeline-list) {
+  overflow: hidden;
+}
+
+.stack-list {
+  max-height: min(30rem, 68vh);
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.stack-list__item {
+  min-width: 0;
+}
+
+.stack-list__item > div:first-child {
+  min-width: 0;
+}
+
+.stack-list__item strong,
+.stack-list__item p {
+  overflow-wrap: anywhere;
+}
