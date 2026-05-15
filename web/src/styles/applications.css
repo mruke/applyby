@@ -1,0 +1,35 @@
+.applications-workspace {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.applications-workspace__pane {
+  min-width: 0;
+}
+
+.applications-workspace__pane--sticky {
+  align-self: start;
+}
+
+@media (min-width: 720px) {
+  .search-form,
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .form-actions--split {
+    align-items: end;
+  }
+}
+
+@media (min-width: 980px) {
+  .applications-workspace {
+    grid-template-columns: minmax(20rem, 0.72fr) minmax(0, 1.28fr);
+    align-items: start;
+  }
+
+  .applications-workspace__pane--sticky {
+    position: sticky;
+    top: 1.25rem;
+  }
+}

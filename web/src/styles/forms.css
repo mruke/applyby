@@ -1,0 +1,117 @@
+.application-form,
+.status-update-form,
+.reminder-form,
+.search-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.form-field label {
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: #ffffff;
+  color: var(--color-text);
+  padding: 0.65rem;
+}
+
+.form-field input:hover,
+.form-field select:hover,
+.form-field textarea:hover {
+  border-color: var(--color-primary);
+}
+
+.form-field textarea {
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-start;
+  margin-top: 0.35rem;
+}
+
+.form-actions button,
+.primary-button {
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-primary);
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 800;
+  padding: 0.7rem 1rem;
+}
+
+.form-actions button:hover,
+.primary-button:hover {
+  background: var(--color-primary-hover);
+}
+
+.form-actions button:disabled,
+.primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.secondary-button,
+.stack-list__actions a {
+  border: 1px solid var(--color-border-strong) !important;
+  border-radius: var(--radius-control);
+  background: #ffffff !important;
+  color: var(--color-primary) !important;
+  font-weight: 800;
+  padding: 0.55rem 0.75rem;
+  text-decoration: none;
+}
+
+.secondary-button:hover,
+.stack-list__actions a:hover {
+  background: #e5f4ee !important;
+}
+
+.danger-button,
+.form-actions .danger-button,
+.stack-list__actions .danger-button {
+  border-color: var(--color-danger) !important;
+  background: #ffffff !important;
+  color: var(--color-danger) !important;
+}
+
+.danger-button:hover,
+.form-actions .danger-button:hover,
+.stack-list__actions .danger-button:hover {
+  background: var(--color-error-bg) !important;
+  color: var(--color-danger-hover) !important;
+}
+
+.form-message {
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+}
+
+.form-message--error {
+  border-color: var(--color-danger);
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+}
+
+.form-message--success {
+  border-color: var(--color-green);
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
