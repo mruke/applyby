@@ -523,3 +523,16 @@ The project should demonstrate disciplined architecture and practical software e
 
 The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow. Generated data and benchmark coverage remain planned.
 
+## Testing Layout
+
+Current test layout:
+
+```text
+internal/.../*_test.go
+internal/storage/postgres/*_test.go
+web/src/**/*.test.ts
+web/src/**/*.test.tsx
+web/src/test/
+```
+
+ApplyBy does not use a dedicated root `tests/` container. Go tests are colocated with the packages they verify, PostgreSQL repository tests live with the PostgreSQL adapter, and frontend tests are colocated with React pages/components.
