@@ -578,8 +578,10 @@ func TestHandleApplicationWorkflowAddsAndListsDocuments(t *testing.T) {
 	addExecutor := &fakeAddDocumentExecutor{document: document}
 	listExecutor := &fakeListDocumentsExecutor{documents: []domain.Document{document}}
 	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{
-		AddDocument:   addExecutor,
-		ListDocuments: listExecutor,
+		Documents: DocumentWorkflowDependencies{
+			AddDocument:   addExecutor,
+			ListDocuments: listExecutor,
+		},
 	})
 
 	postRequest := httptest.NewRequest(
@@ -669,4 +671,130 @@ func newWorkflowHandlerTestReminder(t *testing.T, id domain.ReminderID, complete
 	reminder.Completed = completed
 
 	return reminder
+}
+
+// -----------------------------------------------------------------------------
+// fakeUpdateDocumentExecutor
+//
+// Provides a fake update document workflow for API handler tests.
+// -----------------------------------------------------------------------------
+type fakeUpdateDocumentExecutor struct {
+	document domain.Document
+	input    application.UpdateDocumentInput
+	err      error
+	called   bool
+}
+
+// -----------------------------------------------------------------------------
+// Execute
+//
+// Records update document workflow execution and returns the configured fake result.
+// -----------------------------------------------------------------------------
+func (executor *fakeUpdateDocumentExecutor) Execute(ctx context.Context, input application.UpdateDocumentInput) (domain.Document, error) {
+	executor.called = true
+	executor.input = input
+
+	if executor.err != nil {
+		return domain.Document{}, executor.err
+	}
+
+	return executor.document, nil
+}
+
+// -----------------------------------------------------------------------------
+// fakeRemoveDocumentExecutor
+//
+// Provides a fake remove document workflow for API handler tests.
+// -----------------------------------------------------------------------------
+type fakeRemoveDocumentExecutor struct {
+	input  application.RemoveDocumentInput
+	err    error
+	called bool
+}
+
+// -----------------------------------------------------------------------------
+// Execute
+//
+// Records remove document workflow execution and returns the configured fake result.
+// -----------------------------------------------------------------------------
+func (executor *fakeRemoveDocumentExecutor) Execute(ctx context.Context, input application.RemoveDocumentInput) error {
+	executor.called = true
+	executor.input = input
+
+	if executor.err != nil {
+		return executor.err
+	}
+
+	return nil
+}
+
+// -----------------------------------------------------------------------------
+// TestHandleApplicationWorkflowUpdatesDocument
+//
+// Verifies that PATCH /applications/{id}/documents/{documentId} updates document metadata.
+// -----------------------------------------------------------------------------
+func TestHandleApplicationWorkflowUpdatesDocument(t *testing.T) {
+	document, err := domain.NewDocument("doc-001", "app-001", "Backend Resume v2", "resume", "documents/backend-resume-v2.pdf")
+	if err != nil {
+		t.Fatalf("failed to create document: %v", err)
+	}
+
+	updateExecutor := &fakeUpdateDocumentExecutor{document: document}
+	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{
+		Documents: DocumentWorkflowDependencies{UpdateDocument: updateExecutor},
+	})
+
+	request := httptest.NewRequest(
+		http.MethodPatch,
+		"/applications/app-001/documents/doc-001",
+		strings.NewReader(`{"name":"Backend Resume v2","kind":"resume","path":"documents/backend-resume-v2.pdf"}`),
+	)
+	response := httptest.NewRecorder()
+
+	if !handlers.HandleApplicationWorkflow(response, request) {
+		t.Fatal("expected workflow handler to route document update request")
+	}
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, response.Code)
+	}
+
+	if !updateExecutor.called {
+		t.Fatal("expected update document workflow to be called")
+	}
+
+	if updateExecutor.input.ApplicationID != "app-001" || updateExecutor.input.DocumentID != "doc-001" {
+		t.Fatalf("expected application and document ids to be preserved")
+	}
+}
+
+// -----------------------------------------------------------------------------
+// TestHandleApplicationWorkflowRemovesDocument
+//
+// Verifies that DELETE /applications/{id}/documents/{documentId} removes document metadata.
+// -----------------------------------------------------------------------------
+func TestHandleApplicationWorkflowRemovesDocument(t *testing.T) {
+	removeExecutor := &fakeRemoveDocumentExecutor{}
+	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{
+		Documents: DocumentWorkflowDependencies{RemoveDocument: removeExecutor},
+	})
+
+	request := httptest.NewRequest(http.MethodDelete, "/applications/app-001/documents/doc-001", nil)
+	response := httptest.NewRecorder()
+
+	if !handlers.HandleApplicationWorkflow(response, request) {
+		t.Fatal("expected workflow handler to route document remove request")
+	}
+
+	if response.Code != http.StatusNoContent {
+		t.Fatalf("expected status %d, got %d", http.StatusNoContent, response.Code)
+	}
+
+	if !removeExecutor.called {
+		t.Fatal("expected remove document workflow to be called")
+	}
+
+	if removeExecutor.input.ApplicationID != "app-001" || removeExecutor.input.DocumentID != "doc-001" {
+		t.Fatalf("expected application and document ids to be preserved")
+	}
 }

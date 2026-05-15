@@ -14,5 +14,6 @@ export const endpoints = {
   applicationContacts: (applicationId: string) => `/applications/${applicationId}/contacts`,
   applicationContact: (applicationId: string, contactId: string) => `/applications/${applicationId}/contacts/${contactId}`,
   applicationDocuments: (applicationId: string) => `/applications/${applicationId}/documents`,
+  applicationDocument: (applicationId: string, documentId: string) => `/applications/${applicationId}/documents/${documentId}`,
   completeReminder: (reminderId: string) => `/reminders/${reminderId}/complete`
 } as const;

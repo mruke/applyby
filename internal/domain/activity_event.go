@@ -23,6 +23,8 @@ const (
 	ActivityContactUpdated     ActivityEventType = "contact_updated"
 	ActivityContactRemoved     ActivityEventType = "contact_removed"
 	ActivityDocumentAdded      ActivityEventType = "document_added"
+	ActivityDocumentUpdated    ActivityEventType = "document_updated"
+	ActivityDocumentRemoved    ActivityEventType = "document_removed"
 )
 
 // -----------------------------------------------------------------------------
@@ -54,6 +56,8 @@ func AllActivityEventTypes() []ActivityEventType {
 		ActivityContactUpdated,
 		ActivityContactRemoved,
 		ActivityDocumentAdded,
+		ActivityDocumentUpdated,
+		ActivityDocumentRemoved,
 	}
 }
 

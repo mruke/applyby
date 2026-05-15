@@ -75,9 +75,12 @@ func run() error {
 			UpdateContact: application.NewUpdateContactService(repository, repository),
 			RemoveContact: application.NewRemoveContactService(repository, repository),
 		},
-		AddDocument:   application.NewAddDocumentService(repository, repository),
-		ListDocuments: application.NewListDocumentsService(repository),
-	})
+		Documents: api.DocumentWorkflowDependencies{
+			AddDocument:    application.NewAddDocumentService(repository, repository),
+			ListDocuments:  application.NewListDocumentsService(repository),
+			UpdateDocument: application.NewUpdateDocumentService(repository, repository),
+			RemoveDocument: application.NewRemoveDocumentService(repository, repository),
+		}})
 
 	router := api.NewExpandedRouter(applicationHandlers, workflowHandlers)
 

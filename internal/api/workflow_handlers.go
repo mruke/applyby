@@ -56,24 +56,6 @@ type completeReminderExecutor interface {
 }
 
 // -----------------------------------------------------------------------------
-// addDocumentExecutor
-//
-// Defines the application behavior needed by the add document handler.
-// -----------------------------------------------------------------------------
-type addDocumentExecutor interface {
-	Execute(ctx context.Context, input application.AddDocumentInput) (domain.Document, error)
-}
-
-// -----------------------------------------------------------------------------
-// listDocumentsExecutor
-//
-// Defines the application behavior needed by the list documents handler.
-// -----------------------------------------------------------------------------
-type listDocumentsExecutor interface {
-	Execute(ctx context.Context, input application.ListDocumentsInput) ([]domain.Document, error)
-}
-
-// -----------------------------------------------------------------------------
 // WorkflowHandlers
 //
 // Groups HTTP handlers for expanded application workflow API routes.
@@ -85,8 +67,7 @@ type WorkflowHandlers struct {
 	listReminders      listRemindersExecutor
 	completeReminder   completeReminderExecutor
 	contacts           ContactWorkflowHandlers
-	addDocument        addDocumentExecutor
-	listDocuments      listDocumentsExecutor
+	documents          DocumentWorkflowHandlers
 }
 
 // -----------------------------------------------------------------------------
@@ -101,8 +82,7 @@ type WorkflowHandlerDependencies struct {
 	ListReminders      listRemindersExecutor
 	CompleteReminder   completeReminderExecutor
 	Contacts           ContactWorkflowDependencies
-	AddDocument        addDocumentExecutor
-	ListDocuments      listDocumentsExecutor
+	Documents          DocumentWorkflowDependencies
 }
 
 // -----------------------------------------------------------------------------
@@ -118,8 +98,7 @@ func NewWorkflowHandlers(dependencies WorkflowHandlerDependencies) WorkflowHandl
 		listReminders:      dependencies.ListReminders,
 		completeReminder:   dependencies.CompleteReminder,
 		contacts:           NewContactWorkflowHandlers(dependencies.Contacts),
-		addDocument:        dependencies.AddDocument,
-		listDocuments:      dependencies.ListDocuments,
+		documents:          NewDocumentWorkflowHandlers(dependencies.Documents),
 	}
 }
 
@@ -198,6 +177,11 @@ func (handlers WorkflowHandlers) HandleApplicationWorkflow(response http.Respons
 		return true
 	}
 
+	if applicationID, documentID, ok := applicationDocumentResourcePathParts(request.URL.Path); ok {
+		handlers.documents.HandleResource(response, request, applicationID, documentID)
+		return true
+	}
+
 	applicationID, resource, ok := applicationWorkflowPathParts(request.URL.Path)
 	if !ok {
 		return false
@@ -211,7 +195,7 @@ func (handlers WorkflowHandlers) HandleApplicationWorkflow(response http.Respons
 	case "contacts":
 		handlers.contacts.HandleCollection(response, request, applicationID)
 	case "documents":
-		handlers.handleDocuments(response, request, applicationID)
+		handlers.documents.HandleCollection(response, request, applicationID)
 	default:
 		return false
 	}
@@ -318,71 +302,6 @@ func (handlers WorkflowHandlers) handleListReminders(response http.ResponseWrite
 }
 
 // -----------------------------------------------------------------------------
-// handleDocuments
-//
-// Handles document metadata collection requests for one application.
-// -----------------------------------------------------------------------------
-func (handlers WorkflowHandlers) handleDocuments(response http.ResponseWriter, request *http.Request, applicationID domain.ApplicationID) {
-	switch request.Method {
-	case http.MethodGet:
-		handlers.handleListDocuments(response, request, applicationID)
-	case http.MethodPost:
-		handlers.handleAddDocument(response, request, applicationID)
-	default:
-		writeJSON(response, http.StatusMethodNotAllowed, errorResponse{Error: "method not allowed"})
-	}
-}
-
-// -----------------------------------------------------------------------------
-// handleAddDocument
-//
-// Decodes, validates, and executes the add document metadata workflow.
-// -----------------------------------------------------------------------------
-func (handlers WorkflowHandlers) handleAddDocument(response http.ResponseWriter, request *http.Request, applicationID domain.ApplicationID) {
-	if handlers.addDocument == nil {
-		writeJSON(response, http.StatusInternalServerError, errorResponse{Error: "add document service is not configured"})
-		return
-	}
-
-	var body documentRequest
-
-	if err := decodeJSON(request, &body); err != nil {
-		writeJSON(response, http.StatusBadRequest, errorResponse{Error: err.Error()})
-		return
-	}
-
-	document, err := handlers.addDocument.Execute(request.Context(), body.toInput(applicationID))
-	if err != nil {
-		writeJSON(response, http.StatusBadRequest, errorResponse{Error: err.Error()})
-		return
-	}
-
-	writeJSON(response, http.StatusCreated, documentToResponse(document))
-}
-
-// -----------------------------------------------------------------------------
-// handleListDocuments
-//
-// Executes the list documents workflow for one application.
-// -----------------------------------------------------------------------------
-func (handlers WorkflowHandlers) handleListDocuments(response http.ResponseWriter, request *http.Request, applicationID domain.ApplicationID) {
-	if handlers.listDocuments == nil {
-		writeJSON(response, http.StatusInternalServerError, errorResponse{Error: "list documents service is not configured"})
-		return
-	}
-
-	documents, err := handlers.listDocuments.Execute(request.Context(), application.ListDocumentsInput{
-		ApplicationID: applicationID,
-	})
-	if err != nil {
-		writeJSON(response, http.StatusBadRequest, errorResponse{Error: err.Error()})
-		return
-	}
-
-	writeJSON(response, http.StatusOK, documentsToResponse(documents))
-}
-
-// -----------------------------------------------------------------------------
 // applicationWorkflowPathParts
 //
 // Extracts the application identity and nested resource from an application route.
@@ -435,6 +354,36 @@ func applicationContactResourcePathParts(path string) (domain.ApplicationID, dom
 	}
 
 	return applicationID, contactID, true
+}
+
+// -----------------------------------------------------------------------------
+// applicationDocumentResourcePathParts
+//
+// Extracts application and document identities from a document maintenance route.
+// -----------------------------------------------------------------------------
+func applicationDocumentResourcePathParts(path string) (domain.ApplicationID, domain.DocumentID, bool) {
+	if !strings.HasPrefix(path, "/applications/") {
+		return "", "", false
+	}
+
+	trimmedPath := strings.TrimPrefix(path, "/applications/")
+	parts := strings.Split(strings.Trim(trimmedPath, "/"), "/")
+
+	if len(parts) != 3 || parts[1] != "documents" {
+		return "", "", false
+	}
+
+	applicationID, err := domain.NewApplicationID(parts[0])
+	if err != nil {
+		return "", "", false
+	}
+
+	documentID := domain.DocumentID(parts[2])
+	if err := documentID.Validate(); err != nil {
+		return "", "", false
+	}
+
+	return applicationID, documentID, true
 }
 
 // -----------------------------------------------------------------------------

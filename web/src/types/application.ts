@@ -282,3 +282,25 @@ export type CreateDocumentRequest = {
   kind: string;
   path: string;
 };
+
+// -----------------------------------------------------------------------------
+// UpdateDocumentFormValues
+//
+// Represents editable values from the document metadata edit form.
+// -----------------------------------------------------------------------------
+export type UpdateDocumentFormValues = {
+  name: string;
+  kind: string;
+  path: string;
+};
+
+// -----------------------------------------------------------------------------
+// UpdateDocumentRequest
+//
+// Represents the backend request body for editing document metadata.
+// -----------------------------------------------------------------------------
+export type UpdateDocumentRequest = {
+  name: string;
+  kind: string;
+  path: string;
+};
