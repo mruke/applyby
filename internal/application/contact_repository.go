@@ -50,16 +50,3 @@ type ContactRemover interface {
 type ContactLister interface {
 	ListContactsForApplication(ctx context.Context, applicationID domain.ApplicationID) ([]domain.Contact, error)
 }
-
-// -----------------------------------------------------------------------------
-// ContactRepository
-//
-// Groups the full contact repository behavior expected from persistence.
-// -----------------------------------------------------------------------------
-type ContactRepository interface {
-	ContactSaver
-	ContactFinder
-	ContactUpdater
-	ContactRemover
-	ContactLister
-}

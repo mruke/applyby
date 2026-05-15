@@ -50,16 +50,3 @@ type DocumentRemover interface {
 type DocumentLister interface {
 	ListDocumentsForApplication(ctx context.Context, applicationID domain.ApplicationID) ([]domain.Document, error)
 }
-
-// -----------------------------------------------------------------------------
-// DocumentRepository
-//
-// Groups the full document repository behavior expected from persistence.
-// -----------------------------------------------------------------------------
-type DocumentRepository interface {
-	DocumentSaver
-	DocumentFinder
-	DocumentUpdater
-	DocumentRemover
-	DocumentLister
-}

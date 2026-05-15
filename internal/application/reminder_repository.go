@@ -50,16 +50,3 @@ type ReminderRemover interface {
 type ReminderLister interface {
 	ListRemindersForApplication(ctx context.Context, applicationID domain.ApplicationID) ([]domain.Reminder, error)
 }
-
-// -----------------------------------------------------------------------------
-// ReminderRepository
-//
-// Groups the full reminder repository behavior expected from persistence.
-// -----------------------------------------------------------------------------
-type ReminderRepository interface {
-	ReminderSaver
-	ReminderFinder
-	ReminderUpdater
-	ReminderRemover
-	ReminderLister
-}
