@@ -60,6 +60,11 @@ func (repository *fakeDocumentMaintenanceRepository) UpdateDocument(ctx context.
 		return repository.updateErr
 	}
 
+	existingDocument, ok := repository.documents[document.ID]
+	if !ok || existingDocument.ApplicationID != document.ApplicationID {
+		return fmt.Errorf("document not found: %s", document.ID)
+	}
+
 	repository.documents[document.ID] = document
 
 	return nil
@@ -181,6 +186,9 @@ func TestUpdateDocumentServiceReturnsRepositoryError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected update repository error")
 	}
+	if len(activityRepository.activityEvents) != 0 {
+		t.Fatal("expected failed document update not to record activity")
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -238,6 +246,9 @@ func TestRemoveDocumentServiceReturnsRepositoryError(t *testing.T) {
 
 	if err == nil {
 		t.Fatal("expected remove repository error")
+	}
+	if len(activityRepository.activityEvents) != 0 {
+		t.Fatal("expected failed document removal not to record activity")
 	}
 }
 
