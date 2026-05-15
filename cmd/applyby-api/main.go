@@ -69,12 +69,14 @@ func run() error {
 		ScheduleReminder:   application.NewScheduleReminderService(repository, repository),
 		ListReminders:      application.NewListRemindersService(repository),
 		CompleteReminder:   application.NewCompleteReminderService(repository, repository),
-		AddContact:         application.NewAddContactService(repository, repository),
-		ListContacts:       application.NewListContactsService(repository),
-		UpdateContact:      application.NewUpdateContactService(repository, repository),
-		RemoveContact:      application.NewRemoveContactService(repository, repository),
-		AddDocument:        application.NewAddDocumentService(repository, repository),
-		ListDocuments:      application.NewListDocumentsService(repository),
+		Contacts: api.ContactWorkflowDependencies{
+			AddContact:    application.NewAddContactService(repository, repository),
+			ListContacts:  application.NewListContactsService(repository),
+			UpdateContact: application.NewUpdateContactService(repository, repository),
+			RemoveContact: application.NewRemoveContactService(repository, repository),
+		},
+		AddDocument:   application.NewAddDocumentService(repository, repository),
+		ListDocuments: application.NewListDocumentsService(repository),
 	})
 
 	router := api.NewExpandedRouter(applicationHandlers, workflowHandlers)

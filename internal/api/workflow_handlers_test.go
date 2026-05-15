@@ -456,8 +456,10 @@ func TestHandleApplicationWorkflowAddsAndListsContacts(t *testing.T) {
 	addExecutor := &fakeAddContactExecutor{contact: contact}
 	listExecutor := &fakeListContactsExecutor{contacts: []domain.Contact{contact}}
 	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{
-		AddContact:   addExecutor,
-		ListContacts: listExecutor,
+		Contacts: ContactWorkflowDependencies{
+			AddContact:   addExecutor,
+			ListContacts: listExecutor,
+		},
 	})
 
 	postRequest := httptest.NewRequest(
@@ -503,7 +505,9 @@ func TestHandleApplicationWorkflowUpdatesContact(t *testing.T) {
 	}
 
 	updateExecutor := &fakeUpdateContactExecutor{contact: contact}
-	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{UpdateContact: updateExecutor})
+	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{
+		Contacts: ContactWorkflowDependencies{UpdateContact: updateExecutor},
+	})
 
 	request := httptest.NewRequest(
 		http.MethodPatch,
@@ -536,7 +540,9 @@ func TestHandleApplicationWorkflowUpdatesContact(t *testing.T) {
 // -----------------------------------------------------------------------------
 func TestHandleApplicationWorkflowRemovesContact(t *testing.T) {
 	removeExecutor := &fakeRemoveContactExecutor{}
-	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{RemoveContact: removeExecutor})
+	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{
+		Contacts: ContactWorkflowDependencies{RemoveContact: removeExecutor},
+	})
 
 	request := httptest.NewRequest(http.MethodDelete, "/applications/app-001/contacts/contact-001", nil)
 	response := httptest.NewRecorder()
