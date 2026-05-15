@@ -423,3 +423,76 @@ func TestHandleApplicationResourceRejectsDetailsWorkflowError(t *testing.T) {
 		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, response.Code)
 	}
 }
+
+// -----------------------------------------------------------------------------
+// fakeRemoveApplicationExecutor
+//
+// Provides a fake remove workflow for API handler tests.
+// -----------------------------------------------------------------------------
+type fakeRemoveApplicationExecutor struct {
+	input  application.RemoveApplicationInput
+	err    error
+	called bool
+}
+
+// -----------------------------------------------------------------------------
+// Execute
+//
+// Records remove workflow execution and returns the configured fake result.
+// -----------------------------------------------------------------------------
+func (executor *fakeRemoveApplicationExecutor) Execute(ctx context.Context, input application.RemoveApplicationInput) error {
+	executor.called = true
+	executor.input = input
+
+	if executor.err != nil {
+		return executor.err
+	}
+
+	return nil
+}
+
+// -----------------------------------------------------------------------------
+// TestHandleApplicationResourceRemovesApplication
+//
+// Verifies that DELETE /applications/{id} executes the remove workflow.
+// -----------------------------------------------------------------------------
+func TestHandleApplicationResourceRemovesApplication(t *testing.T) {
+	removeExecutor := &fakeRemoveApplicationExecutor{}
+	handlers := NewApplicationHandlers(nil, nil, nil, nil, nil, removeExecutor)
+
+	request := httptest.NewRequest(http.MethodDelete, "/applications/app-001", nil)
+	response := httptest.NewRecorder()
+
+	handlers.HandleApplicationResource(response, request)
+
+	if response.Code != http.StatusNoContent {
+		t.Fatalf("expected status %d, got %d", http.StatusNoContent, response.Code)
+	}
+
+	if !removeExecutor.called {
+		t.Fatal("expected remove workflow to be called")
+	}
+
+	if removeExecutor.input.ID != "app-001" {
+		t.Fatalf("expected application id to be preserved")
+	}
+}
+
+// -----------------------------------------------------------------------------
+// TestHandleApplicationResourceRejectsRemoveWorkflowError
+//
+// Verifies that remove workflow errors return a bad request response.
+// -----------------------------------------------------------------------------
+func TestHandleApplicationResourceRejectsRemoveWorkflowError(t *testing.T) {
+	removeExecutor := &fakeRemoveApplicationExecutor{err: errors.New("application not found")}
+	handlers := NewApplicationHandlers(nil, nil, nil, nil, nil, removeExecutor)
+
+	request := httptest.NewRequest(http.MethodDelete, "/applications/app-001", nil)
+	response := httptest.NewRecorder()
+
+	handlers.HandleApplicationResource(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, response.Code)
+	}
+}

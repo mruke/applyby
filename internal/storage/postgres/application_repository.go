@@ -219,6 +219,44 @@ func (repository ApplicationRepository) ListApplications(ctx context.Context) ([
 }
 
 // -----------------------------------------------------------------------------
+// RemoveApplication
+//
+// Removes one application. Related rows are removed by database cascade rules.
+// -----------------------------------------------------------------------------
+func (repository ApplicationRepository) RemoveApplication(ctx context.Context, id domain.ApplicationID) error {
+	if repository.db == nil {
+		return fmt.Errorf("database connection is required")
+	}
+
+	if err := id.Validate(); err != nil {
+		return err
+	}
+
+	result, err := repository.db.ExecContext(
+		ctx,
+		`
+        DELETE FROM applications
+        WHERE id = $1
+        `,
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("application not found: %s", id)
+	}
+
+	return nil
+}
+
+// -----------------------------------------------------------------------------
 // applicationScanner
 //
 // Defines the scan behavior shared by SQL rows and row results.

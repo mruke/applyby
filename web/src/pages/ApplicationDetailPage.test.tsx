@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { getActivityEvents } from "../api/activity";
-import { getApplicationById, updateApplicationStatus } from "../api/applications";
+import { getApplicationById, removeApplication, updateApplicationStatus } from "../api/applications";
 import { addContact, getContacts, removeContact } from "../api/contacts";
 import { addDocument, getDocuments, removeDocument } from "../api/documents";
 import { completeReminder, getReminders, removeReminder, scheduleReminder } from "../api/reminders";
@@ -22,6 +22,7 @@ vi.mock("../api/activity", () => ({
 
 vi.mock("../api/applications", () => ({
   getApplicationById: vi.fn(),
+  removeApplication: vi.fn(),
   updateApplicationStatus: vi.fn()
 }));
 
@@ -57,6 +58,7 @@ const mockedGetActivityEvents = vi.mocked(getActivityEvents);
  * Provides typed access to the mocked application detail API function.
  */
 const mockedGetApplicationById = vi.mocked(getApplicationById);
+const mockedRemoveApplication = vi.mocked(removeApplication);
 
 /**
  * mockedUpdateApplicationStatus
@@ -225,6 +227,7 @@ function renderDetailPage(route = "/applications/app-001") {
   return render(
     <MemoryRouter initialEntries={[route]}>
       <Routes>
+        <Route path="/applications" element={<h1>Applications list route</h1>} />
         <Route path="/applications/:applicationId" element={<ApplicationDetailPage />} />
       </Routes>
     </MemoryRouter>
@@ -250,6 +253,7 @@ beforeEach(() => {
   mockedCompleteReminder.mockReset();
   mockedGetActivityEvents.mockReset();
   mockedGetApplicationById.mockReset();
+  mockedRemoveApplication.mockReset();
   mockedGetContacts.mockReset();
   mockedRemoveContact.mockReset();
   mockedGetDocuments.mockReset();
@@ -304,6 +308,43 @@ describe("ApplicationDetailPage", () => {
     expect(
       await screen.findByRole("heading", { level: 2, name: "Application could not be loaded" })
     ).toBeInTheDocument();
+  });
+
+  test("removes the application after confirmation", async () => {
+    mockSuccessfulDetailLoad();
+    mockedRemoveApplication.mockResolvedValue(undefined);
+
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    renderDetailPage();
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Backend Developer" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove application" }));
+
+    await waitFor(() => {
+      expect(mockedRemoveApplication).toHaveBeenCalledWith("app-001");
+    });
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Applications list route" })).toBeInTheDocument();
+
+    confirmSpy.mockRestore();
+  });
+
+  test("does not remove the application when confirmation is cancelled", async () => {
+    mockSuccessfulDetailLoad();
+
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+
+    renderDetailPage();
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Backend Developer" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove application" }));
+
+    expect(mockedRemoveApplication).not.toHaveBeenCalled();
+
+    confirmSpy.mockRestore();
   });
 
   test("updates application status", async () => {

@@ -34,6 +34,15 @@ type ApplicationDetailsUpdater interface {
 }
 
 // -----------------------------------------------------------------------------
+// ApplicationRemover
+//
+// Defines the storage behavior required to remove an application.
+// -----------------------------------------------------------------------------
+type ApplicationRemover interface {
+	RemoveApplication(ctx context.Context, id domain.ApplicationID) error
+}
+
+// -----------------------------------------------------------------------------
 // ApplicationLister
 //
 // Defines the storage behavior required to list tracked applications.
@@ -51,5 +60,6 @@ type ApplicationRepository interface {
 	ApplicationSaver
 	ApplicationFinder
 	ApplicationDetailsUpdater
+	ApplicationRemover
 	ApplicationLister
 }
