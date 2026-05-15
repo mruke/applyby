@@ -38,9 +38,9 @@ const mockedSearchApplications = vi.mocked(searchApplications);
  *
  * Renders the applications page inside a router for component tests.
  */
-function renderApplicationsPage() {
+function renderApplicationsPage(route = "/applications") {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[route]}>
       <ApplicationsPage />
     </MemoryRouter>
   );
@@ -191,6 +191,26 @@ describe("ApplicationsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add application" }));
 
     expect(await screen.findByRole("heading", { level: 2, name: "Applications need attention" })).toBeInTheDocument();
+  });
+
+  test("loads status-filtered applications from URL params", async () => {
+    mockedGetApplications.mockResolvedValue(buildApplicationsResponse());
+    mockedSearchApplications.mockResolvedValue({
+      applications: [buildApplicationsResponse().applications[1]]
+    });
+
+    renderApplicationsPage("/applications?status=interviewing");
+
+    await waitFor(() => {
+      expect(mockedSearchApplications).toHaveBeenCalledWith({
+        companyName: "",
+        source: "",
+        statuses: ["interviewing"],
+        text: ""
+      });
+    });
+
+    expect(await screen.findByRole("link", { name: "Frontend Developer" })).toBeInTheDocument();
   });
 
   test("searches applications", async () => {

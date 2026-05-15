@@ -130,8 +130,14 @@ describe("ContactEditPage", () => {
 
     expect(await screen.findByRole("heading", { level: 1, name: "Edit contact" })).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Name"), {
+    const nameInput = screen.getByLabelText("Name");
+
+    fireEvent.change(nameInput, {
       target: { value: "Sam Hiring" }
+    });
+
+    await waitFor(() => {
+      expect(nameInput).toHaveValue("Sam Hiring");
     });
 
     fireEvent.click(screen.getByRole("button", { name: "Save contact" }));
