@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import { createApplication, getApplications, searchApplications } from "../api/applications";
 import { ApplicationForm } from "../components/ApplicationForm";
@@ -7,7 +8,8 @@ import { ApplicationSearchForm } from "../components/ApplicationSearchForm";
 import { EmptyState } from "../components/EmptyState";
 import { ErrorState } from "../components/ErrorState";
 import { LoadingState } from "../components/LoadingState";
-import type { ApplicationResponse, ApplicationSearchCriteria, CreateApplicationFormValues } from "../types/application";
+import { applicationStatusOptions } from "../constants/applicationStatuses";
+import type { ApplicationResponse, ApplicationSearchCriteria, ApplicationStatus, CreateApplicationFormValues } from "../types/application";
 
 /**
  * emptySearchCriteria
@@ -37,6 +39,56 @@ type ApplicationsPageState = {
 };
 
 /**
+ * isApplicationStatus
+ *
+ * Reports whether a query string value is a supported application status.
+ */
+function isApplicationStatus(value: string): value is ApplicationStatus {
+  return applicationStatusOptions.some((status) => status.value === value);
+}
+
+/**
+ * searchCriteriaFromParams
+ *
+ * Converts URL query params into application search criteria.
+ */
+function searchCriteriaFromParams(searchParams: URLSearchParams): ApplicationSearchCriteria {
+  return {
+    companyName: searchParams.get("company_name") ?? "",
+    source: searchParams.get("source") ?? "",
+    statuses: searchParams.getAll("status").filter(isApplicationStatus),
+    text: searchParams.get("text") ?? ""
+  };
+}
+
+/**
+ * paramsFromSearchCriteria
+ *
+ * Converts application search criteria into URL query params.
+ */
+function paramsFromSearchCriteria(criteria: ApplicationSearchCriteria): URLSearchParams {
+  const params = new URLSearchParams();
+
+  if (criteria.companyName.trim() !== "") {
+    params.set("company_name", criteria.companyName.trim());
+  }
+
+  if (criteria.source.trim() !== "") {
+    params.set("source", criteria.source.trim());
+  }
+
+  if (criteria.text.trim() !== "") {
+    params.set("text", criteria.text.trim());
+  }
+
+  for (const status of criteria.statuses) {
+    params.append("status", status);
+  }
+
+  return params;
+}
+
+/**
  * hasActiveSearchCriteria
  *
  * Reports whether any application search criteria are active.
@@ -57,13 +109,16 @@ function hasActiveSearchCriteria(criteria: ApplicationSearchCriteria): boolean {
  * searching, filtering, and clearing the applications list.
  */
 export function ApplicationsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSearchCriteria = searchCriteriaFromParams(searchParams);
+
   const [state, setState] = useState<ApplicationsPageState>({
     applications: [],
     errorMessage: null,
     isLoading: true,
     isSearching: false,
     isSubmitting: false,
-    searchCriteria: emptySearchCriteria,
+    searchCriteria: initialSearchCriteria,
     successMessage: null
   });
 
@@ -90,7 +145,8 @@ export function ApplicationsPage() {
 
     async function loadInitialApplications() {
       try {
-        const response = await getApplications();
+        const criteria = searchCriteriaFromParams(searchParams);
+        const response = hasActiveSearchCriteria(criteria) ? await searchApplications(criteria) : await getApplications();
 
         if (!isCurrentRequest) {
           return;
@@ -100,7 +156,8 @@ export function ApplicationsPage() {
           ...currentState,
           applications: response.applications,
           errorMessage: null,
-          isLoading: false
+          isLoading: false,
+          searchCriteria: criteria
         }));
       } catch {
         if (!isCurrentRequest) {
@@ -138,6 +195,7 @@ export function ApplicationsPage() {
 
     try {
       await createApplication(values);
+      setSearchParams({});
       await loadApplications();
 
       setState((currentState) => ({
@@ -171,6 +229,7 @@ export function ApplicationsPage() {
 
     try {
       const response = await searchApplications(criteria);
+      setSearchParams(paramsFromSearchCriteria(criteria));
 
       setState((currentState) => ({
         ...currentState,
@@ -205,6 +264,7 @@ export function ApplicationsPage() {
     }));
 
     try {
+      setSearchParams({});
       await loadApplications();
     } catch {
       setState((currentState) => ({

@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { getApplications } from "../api/applications";
@@ -15,6 +16,19 @@ vi.mock("../api/applications", () => ({
  * Provides typed access to the mocked applications API function.
  */
 const mockedGetApplications = vi.mocked(getApplications);
+
+/**
+ * renderDashboardPage
+ *
+ * Renders the dashboard inside a router for link tests.
+ */
+function renderDashboardPage() {
+  return render(
+    <MemoryRouter>
+      <DashboardPage />
+    </MemoryRouter>
+  );
+}
 
 /**
  * buildApplicationsResponse
@@ -53,6 +67,16 @@ function buildApplicationsResponse(): ApplicationsResponse {
         source: "Recruiter",
         notes: "Offer received.",
         created_at: "2026-05-12T08:00:00Z"
+      },
+      {
+        id: "app-004",
+        title: "Data Developer",
+        company_name: "Archive Ltd",
+        company_website: "https://archive.example.com",
+        status: "archived",
+        source: "Job board",
+        notes: "Archived older opportunity.",
+        created_at: "2026-05-09T08:00:00Z"
       }
     ]
   };
@@ -66,26 +90,70 @@ describe("DashboardPage", () => {
   test("shows a loading state while dashboard data loads", () => {
     mockedGetApplications.mockReturnValue(new Promise(() => {}));
 
-    render(<DashboardPage />);
+    renderDashboardPage();
 
     expect(screen.getByText("Loading dashboard...")).toBeInTheDocument();
   });
 
-  test("renders dashboard metrics", async () => {
+  test("renders dashboard summary filter buttons and applications", async () => {
     mockedGetApplications.mockResolvedValue(buildApplicationsResponse());
 
-    render(<DashboardPage />);
+    renderDashboardPage();
 
-    expect(await screen.findByRole("heading", { level: 2, name: "Total applications" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "Active applications" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "Interviewing" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "Offers" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /Total applications/i })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /Active applications/i })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("heading", { level: 2, name: "Applications" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open applications workbench" })).toHaveAttribute("href", "/applications");
+    expect(screen.getByRole("link", { name: "Platform Developer" })).toHaveAttribute("href", "/applications/app-003");
+    expect(screen.getByRole("link", { name: "Data Developer" })).toHaveAttribute("href", "/applications/app-004");
+  });
+
+  test("filters dashboard applications when a summary card is clicked", async () => {
+    mockedGetApplications.mockResolvedValue(buildApplicationsResponse());
+
+    renderDashboardPage();
+
+    expect(await screen.findByRole("link", { name: "Backend Developer" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Data Developer" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Interviewing/i }));
+
+    expect(screen.getByRole("button", { name: /Interviewing/i })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("link", { name: "Frontend Developer" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Backend Developer" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Platform Developer" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Data Developer" })).not.toBeInTheDocument();
+  });
+
+  test("shows an empty summary view when no applications match the selected card", async () => {
+    mockedGetApplications.mockResolvedValue({
+      applications: [
+        {
+          id: "app-001",
+          title: "Backend Developer",
+          company_name: "Example Studio",
+          company_website: "https://example.com",
+          status: "applied",
+          source: "Company site",
+          notes: "Applied with backend resume.",
+          created_at: "2026-05-10T08:00:00Z"
+        }
+      ]
+    });
+
+    renderDashboardPage();
+
+    expect(await screen.findByRole("link", { name: "Backend Developer" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Offers/i }));
+
+    expect(screen.getByText("No applications match this summary view.")).toBeInTheDocument();
   });
 
   test("shows an error state when dashboard data fails to load", async () => {
     mockedGetApplications.mockRejectedValue(new Error("network failed"));
 
-    render(<DashboardPage />);
+    renderDashboardPage();
 
     expect(
       await screen.findByRole("heading", { level: 2, name: "Dashboard could not be loaded" })
