@@ -220,23 +220,8 @@ export function ApplicationsPage() {
     <>
       <header className="page-header">
         <h1>Applications</h1>
-        <p>Search, filter, and scan tracked applications.</p>
+        <p>Add new opportunities while keeping the current application list and filters visible.</p>
       </header>
-
-      <ApplicationForm isSubmitting={state.isSubmitting} onSubmit={handleCreateApplication} />
-
-      <ApplicationSearchForm
-        criteria={state.searchCriteria}
-        isSearching={state.isSearching}
-        onClear={handleClearSearch}
-        onSearch={handleSearchApplications}
-      />
-
-      {hasActiveSearchCriteria(state.searchCriteria) ? (
-        <p className="active-filter-summary" role="status">
-          Search filters are active.
-        </p>
-      ) : null}
 
       {state.successMessage ? (
         <p className="form-message form-message--success" role="status">
@@ -244,22 +229,52 @@ export function ApplicationsPage() {
         </p>
       ) : null}
 
-      {state.isLoading ? (
-        <LoadingState message="Loading applications..." />
-      ) : state.errorMessage ? (
-        <ErrorState title="Applications need attention" message={state.errorMessage} />
-      ) : state.applications.length === 0 ? (
-        <EmptyState
-          title={hasActiveSearchCriteria(state.searchCriteria) ? "No matching applications" : "No applications yet"}
-          message={
-            hasActiveSearchCriteria(state.searchCriteria)
-              ? "Try changing or clearing the search filters."
-              : "Add your first application to start tracking your job search."
-          }
-        />
-      ) : (
-        <ApplicationList applications={state.applications} />
-      )}
+      <div className="applications-workspace">
+        <div className="applications-workspace__pane applications-workspace__pane--sticky">
+          <ApplicationForm isSubmitting={state.isSubmitting} onSubmit={handleCreateApplication} />
+        </div>
+
+        <div className="applications-workspace__pane">
+          <section className="state-card" aria-labelledby="applications-list-heading">
+            <div className="section-heading-row">
+              <div>
+                <h2 id="applications-list-heading">Tracked applications</h2>
+                <p>{state.applications.length} currently shown</p>
+              </div>
+            </div>
+
+            <ApplicationSearchForm
+              criteria={state.searchCriteria}
+              isSearching={state.isSearching}
+              onClear={handleClearSearch}
+              onSearch={handleSearchApplications}
+            />
+
+            {hasActiveSearchCriteria(state.searchCriteria) ? (
+              <p className="active-filter-summary" role="status">
+                Search filters are active.
+              </p>
+            ) : null}
+
+            {state.isLoading ? (
+              <LoadingState message="Loading applications..." />
+            ) : state.errorMessage ? (
+              <ErrorState title="Applications need attention" message={state.errorMessage} />
+            ) : state.applications.length === 0 ? (
+              <EmptyState
+                title={hasActiveSearchCriteria(state.searchCriteria) ? "No matching applications" : "No applications yet"}
+                message={
+                  hasActiveSearchCriteria(state.searchCriteria)
+                    ? "Try changing or clearing the search filters."
+                    : "Add your first application to start tracking your job search."
+                }
+              />
+            ) : (
+              <ApplicationList applications={state.applications} />
+            )}
+          </section>
+        </div>
+      </div>
     </>
   );
 }
