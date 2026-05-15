@@ -4,12 +4,11 @@ import { Link, useParams } from "react-router-dom";
 import { getActivityEvents } from "../api/activity";
 import { getApplicationById, updateApplicationStatus } from "../api/applications";
 import { addContact, getContacts, removeContact } from "../api/contacts";
-import { addDocument, getDocuments } from "../api/documents";
+import { addDocument, getDocuments, removeDocument } from "../api/documents";
 import { completeReminder, getReminders, scheduleReminder } from "../api/reminders";
 import { ActivityTimeline } from "../components/ActivityTimeline";
 import { ContactSection } from "../components/ContactSection";
-import { DocumentForm } from "../components/DocumentForm";
-import { DocumentList } from "../components/DocumentList";
+import { DocumentSection } from "../components/DocumentSection";
 import { EmptyState } from "../components/EmptyState";
 import { ErrorState } from "../components/ErrorState";
 import { LoadingState } from "../components/LoadingState";
@@ -58,6 +57,7 @@ type ApplicationDetailPageState = {
   isCompletingReminder: boolean;
   isLoading: boolean;
   isRemovingContact: boolean;
+  isRemovingDocument: boolean;
   isSubmittingReminder: boolean;
   isSubmittingStatus: boolean;
   reminders: ReminderResponse[];
@@ -233,6 +233,7 @@ export function ApplicationDetailPage() {
     isCompletingReminder: false,
     isLoading: true,
     isRemovingContact: false,
+    isRemovingDocument: false,
     isSubmittingReminder: false,
     isSubmittingStatus: false,
     reminders: [],
@@ -463,6 +464,7 @@ export function ApplicationDetailPage() {
       setState((currentState) => ({
         ...currentState,
         isRemovingContact: false,
+    isRemovingDocument: false,
         successMessage: "Contact removed."
       }));
     } catch {
@@ -470,6 +472,43 @@ export function ApplicationDetailPage() {
         ...currentState,
         errorMessage: "Contact could not be removed. Try again.",
         isRemovingContact: false,
+    isRemovingDocument: false,
+        successMessage: null
+      }));
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // handleRemoveDocument
+  //
+  // Removes document metadata, refreshes detail data, and displays feedback.
+  // ---------------------------------------------------------------------------
+  async function handleRemoveDocument(documentId: string) {
+    if (!applicationId) {
+      return;
+    }
+
+    setState((currentState) => ({
+      ...currentState,
+      errorMessage: null,
+      isRemovingDocument: true,
+      successMessage: null
+    }));
+
+    try {
+      await removeDocument(applicationId, documentId);
+      await loadDetailData();
+
+      setState((currentState) => ({
+        ...currentState,
+        isRemovingDocument: false,
+        successMessage: "Document metadata removed."
+      }));
+    } catch {
+      setState((currentState) => ({
+        ...currentState,
+        errorMessage: "Document metadata could not be removed. Try again.",
+        isRemovingDocument: false,
         successMessage: null
       }));
     }
@@ -631,18 +670,15 @@ export function ApplicationDetailPage() {
           onRemove={handleRemoveContact}
         />
 
-        <DocumentForm isSubmitting={state.isAddingDocument} onSubmit={handleAddDocument} />
-
-        {state.sectionErrors.documents ? (
-          <section className="state-card" aria-labelledby="documents-heading">
-            <h2 id="documents-heading">Documents</h2>
-            <p className="form-message form-message--error" role="alert">
-              {state.sectionErrors.documents}
-            </p>
-          </section>
-        ) : (
-          <DocumentList documents={state.documents} />
-        )}
+        <DocumentSection
+          applicationId={state.application.id}
+          documents={state.documents}
+          errorMessage={state.sectionErrors.documents}
+          isAdding={state.isAddingDocument}
+          isRemoving={state.isRemovingDocument}
+          onAdd={handleAddDocument}
+          onRemove={handleRemoveDocument}
+        />
       </section>
     </>
   );

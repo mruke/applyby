@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getActivityEvents } from "../api/activity";
 import { getApplicationById, updateApplicationStatus } from "../api/applications";
 import { addContact, getContacts, removeContact } from "../api/contacts";
-import { addDocument, getDocuments } from "../api/documents";
+import { addDocument, getDocuments, removeDocument } from "../api/documents";
 import { completeReminder, getReminders, scheduleReminder } from "../api/reminders";
 import type {
   ActivityEventsResponse,
@@ -33,7 +33,8 @@ vi.mock("../api/contacts", () => ({
 
 vi.mock("../api/documents", () => ({
   addDocument: vi.fn(),
-  getDocuments: vi.fn()
+  getDocuments: vi.fn(),
+  removeDocument: vi.fn()
 }));
 
 vi.mock("../api/reminders", () => ({
@@ -97,6 +98,7 @@ const mockedAddDocument = vi.mocked(addDocument);
  * Provides typed access to the mocked document list API function.
  */
 const mockedGetDocuments = vi.mocked(getDocuments);
+const mockedRemoveDocument = vi.mocked(removeDocument);
 
 /**
  * mockedCompleteReminder
@@ -249,6 +251,7 @@ beforeEach(() => {
   mockedGetContacts.mockReset();
   mockedRemoveContact.mockReset();
   mockedGetDocuments.mockReset();
+  mockedRemoveDocument.mockReset();
   mockedGetReminders.mockReset();
   mockedScheduleReminder.mockReset();
   mockedUpdateApplicationStatus.mockReset();
@@ -426,13 +429,32 @@ describe("ApplicationDetailPage", () => {
 
     expect(await screen.findByText("Sam Recruiter")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+    const removeButtons = screen.getAllByRole("button", { name: "Remove" });
+    fireEvent.click(removeButtons[0]);
 
     await waitFor(() => {
       expect(mockedRemoveContact).toHaveBeenCalledWith("app-001", "contact-001");
     });
 
     expect(await screen.findByRole("status")).toHaveTextContent("Contact removed.");
+  });
+
+  test("removes document metadata", async () => {
+    mockSuccessfulDetailLoad();
+    mockedRemoveDocument.mockResolvedValue(undefined);
+
+    renderDetailPage();
+
+    expect(await screen.findByText("Backend Resume")).toBeInTheDocument();
+
+    const removeButtons = screen.getAllByRole("button", { name: "Remove" });
+    fireEvent.click(removeButtons[removeButtons.length - 1]);
+
+    await waitFor(() => {
+      expect(mockedRemoveDocument).toHaveBeenCalledWith("app-001", "doc-001");
+    });
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Document metadata removed.");
   });
 
   test("adds document metadata", async () => {

@@ -44,7 +44,19 @@ vi.mock("./api/contacts", () => ({
 
 vi.mock("./api/documents", () => ({
   addDocument: vi.fn(),
-  getDocuments: vi.fn().mockResolvedValue({ documents: [] })
+  getDocuments: vi.fn().mockResolvedValue({
+    documents: [
+      {
+        id: "doc-001",
+        application_id: "app-001",
+        name: "Backend Resume",
+        kind: "resume",
+        path: "documents/backend-resume.pdf"
+      }
+    ]
+  }),
+  removeDocument: vi.fn(),
+  updateDocument: vi.fn()
 }));
 
 vi.mock("./api/reminders", () => ({
@@ -96,6 +108,12 @@ describe("App", () => {
     renderRoute("/applications/app-001/contacts/contact-001/edit");
 
     expect(await screen.findByRole("heading", { level: 1, name: "Edit contact" })).toBeInTheDocument();
+  });
+
+  test("renders the document edit route", async () => {
+    renderRoute("/applications/app-001/documents/doc-001/edit");
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Edit document metadata" })).toBeInTheDocument();
   });
 
   test("renders the not found route", () => {

@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import type { DocumentResponse } from "../types/application";
 
 /**
@@ -6,7 +8,10 @@ import type { DocumentResponse } from "../types/application";
  * Defines the document metadata records rendered by the document list component.
  */
 type DocumentListProps = {
+  applicationId: string;
   documents: DocumentResponse[];
+  isRemoving?: boolean;
+  onRemove?: (documentId: string) => Promise<void>;
 };
 
 /**
@@ -14,7 +19,7 @@ type DocumentListProps = {
  *
  * Renders document metadata records. This does not perform file upload or download.
  */
-export function DocumentList({ documents }: DocumentListProps) {
+export function DocumentList({ applicationId, documents, isRemoving = false, onRemove }: DocumentListProps) {
   if (documents.length === 0) {
     return (
       <section className="state-card" aria-labelledby="documents-heading">
@@ -37,6 +42,18 @@ export function DocumentList({ documents }: DocumentListProps) {
                 {document.kind}
                 {document.path ? ` · ${document.path}` : ""}
               </p>
+            </div>
+
+            <div className="stack-list__actions">
+              <Link className="secondary-button" to={`/applications/${applicationId}/documents/${document.id}/edit`}>
+                Edit
+              </Link>
+
+              {onRemove ? (
+                <button type="button" disabled={isRemoving} onClick={() => void onRemove(document.id)}>
+                  {isRemoving ? "Removing..." : "Remove"}
+                </button>
+              ) : null}
             </div>
           </li>
         ))}
