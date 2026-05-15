@@ -3,7 +3,6 @@ package application
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/mruke/applyby/internal/domain"
 )
@@ -80,16 +79,11 @@ func (service RemoveContactService) Execute(ctx context.Context, input RemoveCon
 	if err := service.repository.RemoveContact(ctx, input.ApplicationID, input.ContactID); err != nil {
 		return err
 	}
-
-	event, err := domain.NewActivityEvent(
+	return recordActivityEvent(
+		ctx,
+		service.activityRecorder,
 		contact.ApplicationID,
 		domain.ActivityContactRemoved,
-		time.Now().UTC(),
 		fmt.Sprintf("Contact removed: %s.", contact.Name),
 	)
-	if err != nil {
-		return err
-	}
-
-	return service.activityRecorder.RecordActivityEvent(ctx, event)
 }

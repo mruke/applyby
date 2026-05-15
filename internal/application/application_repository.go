@@ -50,16 +50,3 @@ type ApplicationRemover interface {
 type ApplicationLister interface {
 	ListApplications(ctx context.Context) ([]domain.Application, error)
 }
-
-// -----------------------------------------------------------------------------
-// ApplicationRepository
-//
-// Groups the full application repository behavior expected from persistence.
-// -----------------------------------------------------------------------------
-type ApplicationRepository interface {
-	ApplicationSaver
-	ApplicationFinder
-	ApplicationDetailsUpdater
-	ApplicationRemover
-	ApplicationLister
-}

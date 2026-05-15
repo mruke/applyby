@@ -60,6 +60,11 @@ func (repository *fakeContactMaintenanceRepository) UpdateContact(ctx context.Co
 		return repository.updateErr
 	}
 
+	existingContact, ok := repository.contacts[contact.ID]
+	if !ok || existingContact.ApplicationID != contact.ApplicationID {
+		return fmt.Errorf("contact not found: %s", contact.ID)
+	}
+
 	repository.contacts[contact.ID] = contact
 
 	return nil
@@ -181,6 +186,9 @@ func TestUpdateContactServiceReturnsRepositoryError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected update repository error")
 	}
+	if len(activityRepository.activityEvents) != 0 {
+		t.Fatal("expected failed contact update not to record activity")
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -238,6 +246,9 @@ func TestRemoveContactServiceReturnsRepositoryError(t *testing.T) {
 
 	if err == nil {
 		t.Fatal("expected remove repository error")
+	}
+	if len(activityRepository.activityEvents) != 0 {
+		t.Fatal("expected failed contact removal not to record activity")
 	}
 }
 

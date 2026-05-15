@@ -1,0 +1,75 @@
+/* -------------------------------------------------------------------------- */
+/* Dashboard navigation                                                       */
+/* -------------------------------------------------------------------------- */
+
+.dashboard-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.metric-card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.metric-card--link {
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 120ms ease;
+}
+
+.metric-card--link span {
+  color: var(--color-primary);
+  display: inline-block;
+  font-weight: 800;
+  margin-top: 0.5rem;
+}
+
+.metric-card--link:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 4px rgb(27 27 27 / 0.08), 0 12px 28px rgb(27 27 27 / 0.10);
+  transform: translateY(-1px);
+}
+
+.dashboard-recent-list a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.dashboard-recent-list a:hover {
+  text-decoration: underline;
+}
+.metric-card--button {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.metric-card--button[aria-pressed="true"] {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgb(0 106 91 / 0.18), var(--shadow-card);
+}
+
+.metric-card--button span {
+  color: var(--color-primary);
+  display: inline-block;
+  font-weight: 800;
+  margin-top: 0.5rem;
+}
+
+.metric-card--button:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 4px rgb(27 27 27 / 0.08), 0 12px 28px rgb(27 27 27 / 0.10);
+  transform: translateY(-1px);
+}
+
+.dashboard-application-list a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.dashboard-application-list a:hover {
+  text-decoration: underline;
+}

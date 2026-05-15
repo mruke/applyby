@@ -151,10 +151,15 @@ Recommended sections:
 
 The most important actions should be easy to find:
 
+- Edit application details
 - Update status
 - Schedule reminder
+- Edit or remove reminder
 - Add contact
+- Edit or remove contact
 - Add document metadata
+- Edit or remove document metadata
+- Remove application
 
 ## Forms
 
@@ -208,11 +213,20 @@ The user should not have to guess what happened.
 Use clear feedback for:
 
 - application created
+- application edited
+- application removed
 - status updated
 - reminder scheduled
+- reminder edited
 - reminder completed
+- reminder removed
 - contact added
-- document added
+- contact edited
+- contact removed
+- document metadata added
+- document metadata edited
+- document metadata removed
+- dashboard filter changed
 - search returned no results
 - save failed
 - network or API failure

@@ -61,6 +61,10 @@ func (repository *fakeReminderMaintenanceRepository) UpdateReminder(ctx context.
 		return repository.updateErr
 	}
 
+	if _, ok := repository.reminders[reminder.ID]; !ok {
+		return fmt.Errorf("reminder not found: %s", reminder.ID)
+	}
+
 	repository.reminders[reminder.ID] = reminder
 
 	return nil
@@ -182,6 +186,9 @@ func TestUpdateReminderServiceReturnsRepositoryError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected update repository error")
 	}
+	if len(activityRepository.activityEvents) != 0 {
+		t.Fatal("expected failed reminder update not to record activity")
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -237,6 +244,9 @@ func TestRemoveReminderServiceReturnsRepositoryError(t *testing.T) {
 
 	if err == nil {
 		t.Fatal("expected remove repository error")
+	}
+	if len(activityRepository.activityEvents) != 0 {
+		t.Fatal("expected failed reminder removal not to record activity")
 	}
 }
 

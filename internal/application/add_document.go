@@ -3,7 +3,6 @@ package application
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/mruke/applyby/internal/domain"
 )
@@ -45,18 +44,13 @@ func (service AddDocumentService) Execute(ctx context.Context, input AddDocument
 	if err := service.repository.SaveDocument(ctx, document); err != nil {
 		return domain.Document{}, err
 	}
-
-	event, err := domain.NewActivityEvent(
+	if err := recordActivityEvent(
+		ctx,
+		service.activityRecorder,
 		document.ApplicationID,
 		domain.ActivityDocumentAdded,
-		time.Now().UTC(),
 		fmt.Sprintf("Document metadata added: %s.", document.Name),
-	)
-	if err != nil {
-		return domain.Document{}, err
-	}
-
-	if err := service.activityRecorder.RecordActivityEvent(ctx, event); err != nil {
+	); err != nil {
 		return domain.Document{}, err
 	}
 

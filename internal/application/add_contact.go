@@ -3,7 +3,6 @@ package application
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/mruke/applyby/internal/domain"
 )
@@ -45,18 +44,13 @@ func (service AddContactService) Execute(ctx context.Context, input AddContactIn
 	if err := service.repository.SaveContact(ctx, contact); err != nil {
 		return domain.Contact{}, err
 	}
-
-	event, err := domain.NewActivityEvent(
+	if err := recordActivityEvent(
+		ctx,
+		service.activityRecorder,
 		contact.ApplicationID,
 		domain.ActivityContactAdded,
-		time.Now().UTC(),
 		fmt.Sprintf("Contact added: %s.", contact.Name),
-	)
-	if err != nil {
-		return domain.Contact{}, err
-	}
-
-	if err := service.activityRecorder.RecordActivityEvent(ctx, event); err != nil {
+	); err != nil {
 		return domain.Contact{}, err
 	}
 
