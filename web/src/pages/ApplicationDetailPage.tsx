@@ -7,8 +7,7 @@ import { addContact, getContacts, removeContact } from "../api/contacts";
 import { addDocument, getDocuments } from "../api/documents";
 import { completeReminder, getReminders, scheduleReminder } from "../api/reminders";
 import { ActivityTimeline } from "../components/ActivityTimeline";
-import { ContactForm } from "../components/ContactForm";
-import { ContactList } from "../components/ContactList";
+import { ContactSection } from "../components/ContactSection";
 import { DocumentForm } from "../components/DocumentForm";
 import { DocumentList } from "../components/DocumentList";
 import { EmptyState } from "../components/EmptyState";
@@ -622,23 +621,15 @@ export function ApplicationDetailPage() {
           <ActivityTimeline events={state.activityEvents} />
         )}
 
-        <ContactForm isSubmitting={state.isAddingContact} onSubmit={handleAddContact} />
-
-        {state.sectionErrors.contacts ? (
-          <section className="state-card" aria-labelledby="contacts-heading">
-            <h2 id="contacts-heading">Contacts</h2>
-            <p className="form-message form-message--error" role="alert">
-              {state.sectionErrors.contacts}
-            </p>
-          </section>
-        ) : (
-          <ContactList
-            applicationId={state.application.id}
-            contacts={state.contacts}
-            isRemoving={state.isRemovingContact}
-            onRemove={handleRemoveContact}
-          />
-        )}
+        <ContactSection
+          applicationId={state.application.id}
+          contacts={state.contacts}
+          errorMessage={state.sectionErrors.contacts}
+          isAdding={state.isAddingContact}
+          isRemoving={state.isRemovingContact}
+          onAdd={handleAddContact}
+          onRemove={handleRemoveContact}
+        />
 
         <DocumentForm isSubmitting={state.isAddingDocument} onSubmit={handleAddDocument} />
 
