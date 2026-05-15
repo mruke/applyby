@@ -5,67 +5,27 @@ import "testing"
 // -----------------------------------------------------------------------------
 // TestAllowedNextStatusesReturnsExpectedTransitions
 //
-// Verifies that each application status exposes its expected next statuses.
+// Verifies that each valid application status can move to every other valid
+// status so users can correct or revise tracked application state.
 // -----------------------------------------------------------------------------
 func TestAllowedNextStatusesReturnsExpectedTransitions(t *testing.T) {
-	tests := []struct {
-		name     string
-		status   ApplicationStatus
-		expected []ApplicationStatus
-	}{
-		{
-			name:     "draft can move to early active or closed states",
-			status:   StatusDraft,
-			expected: []ApplicationStatus{StatusInterested, StatusApplied, StatusWithdrawn, StatusArchived},
-		},
-		{
-			name:     "interested can move to applied or closed states",
-			status:   StatusInterested,
-			expected: []ApplicationStatus{StatusApplied, StatusWithdrawn, StatusArchived},
-		},
-		{
-			name:     "applied can move through the active pipeline or closed states",
-			status:   StatusApplied,
-			expected: []ApplicationStatus{StatusInterviewing, StatusOffer, StatusRejected, StatusWithdrawn, StatusArchived},
-		},
-		{
-			name:     "interviewing can move to outcome or closed states",
-			status:   StatusInterviewing,
-			expected: []ApplicationStatus{StatusOffer, StatusRejected, StatusWithdrawn, StatusArchived},
-		},
-		{
-			name:     "offer can only be archived",
-			status:   StatusOffer,
-			expected: []ApplicationStatus{StatusArchived},
-		},
-		{
-			name:     "rejected can only be archived",
-			status:   StatusRejected,
-			expected: []ApplicationStatus{StatusArchived},
-		},
-		{
-			name:     "withdrawn can only be archived",
-			status:   StatusWithdrawn,
-			expected: []ApplicationStatus{StatusArchived},
-		},
-		{
-			name:     "archived has no next statuses",
-			status:   StatusArchived,
-			expected: []ApplicationStatus{},
-		},
-	}
+	allStatuses := AllApplicationStatuses()
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			actual := AllowedNextStatuses(test.status)
+	for _, status := range allStatuses {
+		t.Run(status.String()+" can move to every other valid status", func(t *testing.T) {
+			actual := AllowedNextStatuses(status)
 
-			if len(actual) != len(test.expected) {
-				t.Fatalf("expected %d next statuses, got %d", len(test.expected), len(actual))
+			if len(actual) != len(allStatuses)-1 {
+				t.Fatalf("expected %d next statuses, got %d", len(allStatuses)-1, len(actual))
 			}
 
-			for index, expectedStatus := range test.expected {
-				if actual[index] != expectedStatus {
-					t.Fatalf("expected status at index %d to be %q, got %q", index, expectedStatus, actual[index])
+			for _, nextStatus := range actual {
+				if nextStatus == status {
+					t.Fatalf("expected current status %q to be excluded", status)
+				}
+
+				if !IsValidApplicationStatus(nextStatus) {
+					t.Fatalf("expected next status %q to be valid", nextStatus)
 				}
 			}
 		})
@@ -73,51 +33,64 @@ func TestAllowedNextStatusesReturnsExpectedTransitions(t *testing.T) {
 }
 
 // -----------------------------------------------------------------------------
+// TestAllowedNextStatusesReturnsEmptyForInvalidStatus
+//
+// Verifies that invalid statuses do not expose transition options.
+// -----------------------------------------------------------------------------
+func TestAllowedNextStatusesReturnsEmptyForInvalidStatus(t *testing.T) {
+	actual := AllowedNextStatuses(ApplicationStatus("paused"))
+
+	if len(actual) != 0 {
+		t.Fatalf("expected invalid status to return no next statuses")
+	}
+}
+
+// -----------------------------------------------------------------------------
 // TestAllowedNextStatusesReturnsCopy
 //
-// Verifies that callers cannot mutate the stored lifecycle transition table.
+// Verifies that callers cannot mutate generated transition results.
 // -----------------------------------------------------------------------------
 func TestAllowedNextStatusesReturnsCopy(t *testing.T) {
 	nextStatuses := AllowedNextStatuses(StatusDraft)
-	nextStatuses[0] = StatusRejected
+	nextStatuses[0] = StatusDraft
 
 	actual := AllowedNextStatuses(StatusDraft)
 
-	if actual[0] != StatusInterested {
-		t.Fatalf("expected lifecycle transition table to be protected from caller mutation")
+	if actual[0] == StatusDraft {
+		t.Fatalf("expected lifecycle transition result to be protected from caller mutation")
 	}
 }
 
 // -----------------------------------------------------------------------------
-// TestCanTransitionApplicationStatusAcceptsAllowedTransition
+// TestCanTransitionApplicationStatusAcceptsValidTransition
 //
-// Verifies that an allowed lifecycle transition returns true.
+// Verifies that movement between different valid statuses is allowed.
 // -----------------------------------------------------------------------------
-func TestCanTransitionApplicationStatusAcceptsAllowedTransition(t *testing.T) {
-	if !CanTransitionApplicationStatus(StatusApplied, StatusInterviewing) {
-		t.Fatal("expected applied to interviewing transition to be allowed")
+func TestCanTransitionApplicationStatusAcceptsValidTransition(t *testing.T) {
+	if !CanTransitionApplicationStatus(StatusRejected, StatusInterviewing) {
+		t.Fatal("expected rejected to interviewing transition to be allowed")
 	}
 }
 
 // -----------------------------------------------------------------------------
-// TestCanTransitionApplicationStatusRejectsInvalidTransition
+// TestCanTransitionApplicationStatusRejectsSameStatus
 //
-// Verifies that an invalid lifecycle transition returns false.
+// Verifies that no-op status updates are rejected.
 // -----------------------------------------------------------------------------
-func TestCanTransitionApplicationStatusRejectsInvalidTransition(t *testing.T) {
-	if CanTransitionApplicationStatus(StatusRejected, StatusInterviewing) {
-		t.Fatal("expected rejected to interviewing transition to be rejected")
+func TestCanTransitionApplicationStatusRejectsSameStatus(t *testing.T) {
+	if CanTransitionApplicationStatus(StatusApplied, StatusApplied) {
+		t.Fatal("expected same-status transition to be rejected")
 	}
 }
 
 // -----------------------------------------------------------------------------
-// TestValidateApplicationStatusTransitionAcceptsAllowedTransition
+// TestValidateApplicationStatusTransitionAcceptsValidTransition
 //
-// Verifies that validation accepts a supported lifecycle transition.
+// Verifies that validation accepts movement between different valid statuses.
 // -----------------------------------------------------------------------------
-func TestValidateApplicationStatusTransitionAcceptsAllowedTransition(t *testing.T) {
+func TestValidateApplicationStatusTransitionAcceptsValidTransition(t *testing.T) {
 	transition := ApplicationStatusTransition{
-		From: StatusApplied,
+		From: StatusRejected,
 		To:   StatusInterviewing,
 	}
 
@@ -159,61 +132,30 @@ func TestValidateApplicationStatusTransitionRejectsInvalidTargetStatus(t *testin
 }
 
 // -----------------------------------------------------------------------------
-// TestValidateApplicationStatusTransitionRejectsUnsupportedTransition
+// TestValidateApplicationStatusTransitionRejectsSameStatus
 //
-// Verifies that validation rejects unsupported movement between valid statuses.
+// Verifies that validation rejects no-op status transitions.
 // -----------------------------------------------------------------------------
-func TestValidateApplicationStatusTransitionRejectsUnsupportedTransition(t *testing.T) {
+func TestValidateApplicationStatusTransitionRejectsSameStatus(t *testing.T) {
 	transition := ApplicationStatusTransition{
-		From: StatusRejected,
-		To:   StatusInterviewing,
+		From: StatusApplied,
+		To:   StatusApplied,
 	}
 
 	if err := ValidateApplicationStatusTransition(transition); err == nil {
-		t.Fatal("expected unsupported transition to be rejected")
+		t.Fatal("expected same-status transition to be rejected")
 	}
 }
 
 // -----------------------------------------------------------------------------
 // TestIsTerminalApplicationStatus
 //
-// Verifies that only statuses with no forward lifecycle movement are terminal.
+// Verifies that no valid status is terminal because tracker state is editable.
 // -----------------------------------------------------------------------------
 func TestIsTerminalApplicationStatus(t *testing.T) {
-	tests := []struct {
-		name     string
-		status   ApplicationStatus
-		expected bool
-	}{
-		{
-			name:     "draft is not terminal",
-			status:   StatusDraft,
-			expected: false,
-		},
-		{
-			name:     "offer is not terminal because it can be archived",
-			status:   StatusOffer,
-			expected: false,
-		},
-		{
-			name:     "archived is terminal",
-			status:   StatusArchived,
-			expected: true,
-		},
-		{
-			name:     "unknown status is not treated as terminal",
-			status:   ApplicationStatus("paused"),
-			expected: false,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			actual := IsTerminalApplicationStatus(test.status)
-
-			if actual != test.expected {
-				t.Fatalf("expected terminal result %v, got %v", test.expected, actual)
-			}
-		})
+	for _, status := range AllApplicationStatuses() {
+		if IsTerminalApplicationStatus(status) {
+			t.Fatalf("expected status %q not to be terminal", status)
+		}
 	}
 }

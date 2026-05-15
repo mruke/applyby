@@ -5,80 +5,43 @@ import "fmt"
 // -----------------------------------------------------------------------------
 // ApplicationStatusTransition
 //
-// Represents a requested move from one application lifecycle status to another.
+// Represents a requested move from one application status to another.
 // -----------------------------------------------------------------------------
 type ApplicationStatusTransition struct {
 	From ApplicationStatus
 	To   ApplicationStatus
 }
 
-var allowedApplicationStatusTransitions = map[ApplicationStatus][]ApplicationStatus{
-	StatusDraft: {
-		StatusInterested,
-		StatusApplied,
-		StatusWithdrawn,
-		StatusArchived,
-	},
-	StatusInterested: {
-		StatusApplied,
-		StatusWithdrawn,
-		StatusArchived,
-	},
-	StatusApplied: {
-		StatusInterviewing,
-		StatusOffer,
-		StatusRejected,
-		StatusWithdrawn,
-		StatusArchived,
-	},
-	StatusInterviewing: {
-		StatusOffer,
-		StatusRejected,
-		StatusWithdrawn,
-		StatusArchived,
-	},
-	StatusOffer: {
-		StatusArchived,
-	},
-	StatusRejected: {
-		StatusArchived,
-	},
-	StatusWithdrawn: {
-		StatusArchived,
-	},
-	StatusArchived: {},
-}
-
 // -----------------------------------------------------------------------------
 // AllowedNextStatuses
 //
-// Returns the valid next statuses for a current application status.
+// Returns every valid status except the current one. ApplyBy is a tracker, not a
+// strict workflow gate, so users can correct or revise an application's state.
 // -----------------------------------------------------------------------------
 func AllowedNextStatuses(status ApplicationStatus) []ApplicationStatus {
-	nextStatuses, ok := allowedApplicationStatusTransitions[status]
-	if !ok {
+	if !IsValidApplicationStatus(status) {
 		return []ApplicationStatus{}
 	}
 
-	copiedStatuses := make([]ApplicationStatus, len(nextStatuses))
-	copy(copiedStatuses, nextStatuses)
+	allStatuses := AllApplicationStatuses()
+	nextStatuses := make([]ApplicationStatus, 0, len(allStatuses)-1)
 
-	return copiedStatuses
+	for _, nextStatus := range allStatuses {
+		if nextStatus != status {
+			nextStatuses = append(nextStatuses, nextStatus)
+		}
+	}
+
+	return nextStatuses
 }
 
 // -----------------------------------------------------------------------------
 // CanTransitionApplicationStatus
 //
-// Reports whether an application can move from one status to another.
+// Reports whether an application can move from one valid status to another.
 // -----------------------------------------------------------------------------
 func CanTransitionApplicationStatus(from ApplicationStatus, to ApplicationStatus) bool {
-	for _, nextStatus := range AllowedNextStatuses(from) {
-		if nextStatus == to {
-			return true
-		}
-	}
-
-	return false
+	return IsValidApplicationStatus(from) && IsValidApplicationStatus(to) && from != to
 }
 
 // -----------------------------------------------------------------------------
@@ -95,8 +58,8 @@ func ValidateApplicationStatusTransition(transition ApplicationStatusTransition)
 		return fmt.Errorf("invalid target application status: %q", transition.To)
 	}
 
-	if !CanTransitionApplicationStatus(transition.From, transition.To) {
-		return fmt.Errorf("cannot transition application status from %q to %q", transition.From, transition.To)
+	if transition.From == transition.To {
+		return fmt.Errorf("application status is already %q", transition.To)
 	}
 
 	return nil
@@ -108,5 +71,5 @@ func ValidateApplicationStatusTransition(transition ApplicationStatusTransition)
 // Reports whether an application status has no forward lifecycle movement.
 // -----------------------------------------------------------------------------
 func IsTerminalApplicationStatus(status ApplicationStatus) bool {
-	return IsValidApplicationStatus(status) && len(AllowedNextStatuses(status)) == 0
+	return false
 }
