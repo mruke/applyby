@@ -80,7 +80,100 @@ func (repository ApplicationRepository) FindReminderByID(ctx context.Context, id
 		id,
 	)
 
-	return scanReminder(row)
+	reminder, err := scanReminder(row)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return domain.Reminder{}, fmt.Errorf("reminder not found: %s", id)
+		}
+
+		return domain.Reminder{}, err
+	}
+
+	return reminder, nil
+}
+
+// -----------------------------------------------------------------------------
+// UpdateReminder
+//
+// Updates an existing reminder.
+// -----------------------------------------------------------------------------
+func (repository ApplicationRepository) UpdateReminder(ctx context.Context, reminder domain.Reminder) error {
+	if repository.db == nil {
+		return fmt.Errorf("database connection is required")
+	}
+
+	if err := reminder.Validate(); err != nil {
+		return err
+	}
+
+	result, err := repository.db.ExecContext(
+		ctx,
+		`
+        UPDATE reminders
+        SET
+            title = $2,
+            due_at = $3,
+            completed = $4,
+            updated_at = NOW()
+        WHERE id = $1
+        `,
+		reminder.ID,
+		reminder.Title,
+		reminder.DueAt,
+		reminder.Completed,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("reminder not found: %s", reminder.ID)
+	}
+
+	return nil
+}
+
+// -----------------------------------------------------------------------------
+// RemoveReminder
+//
+// Removes one reminder.
+// -----------------------------------------------------------------------------
+func (repository ApplicationRepository) RemoveReminder(ctx context.Context, id domain.ReminderID) error {
+	if repository.db == nil {
+		return fmt.Errorf("database connection is required")
+	}
+
+	if err := id.Validate(); err != nil {
+		return err
+	}
+
+	result, err := repository.db.ExecContext(
+		ctx,
+		`
+        DELETE FROM reminders
+        WHERE id = $1
+        `,
+		id,
+	)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("reminder not found: %s", id)
+	}
+
+	return nil
 }
 
 // -----------------------------------------------------------------------------

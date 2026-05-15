@@ -4,43 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mruke/applyby/internal/application"
 	"github.com/mruke/applyby/internal/domain"
 	"github.com/mruke/applyby/internal/search"
 )
-
-// -----------------------------------------------------------------------------
-// scheduleReminderRequest
-//
-// Represents the JSON request body for scheduling a reminder.
-// -----------------------------------------------------------------------------
-type scheduleReminderRequest struct {
-	ID    string `json:"id"`
-	Title string `json:"title"`
-	DueAt string `json:"due_at"`
-}
-
-// -----------------------------------------------------------------------------
-// reminderResponse
-//
-// Represents the JSON response shape for a reminder.
-// -----------------------------------------------------------------------------
-type reminderResponse struct {
-	ID            string `json:"id"`
-	ApplicationID string `json:"application_id"`
-	Title         string `json:"title"`
-	DueAt         string `json:"due_at"`
-	Completed     bool   `json:"completed"`
-}
-
-// -----------------------------------------------------------------------------
-// remindersResponse
-//
-// Represents the JSON response shape for a reminder collection.
-// -----------------------------------------------------------------------------
-type remindersResponse struct {
-	Reminders []reminderResponse `json:"reminders"`
-}
 
 // -----------------------------------------------------------------------------
 // activityEventResponse
@@ -61,31 +27,6 @@ type activityEventResponse struct {
 // -----------------------------------------------------------------------------
 type activityEventsResponse struct {
 	ActivityEvents []activityEventResponse `json:"activity_events"`
-}
-
-// -----------------------------------------------------------------------------
-// toInput
-//
-// Converts a schedule reminder request into an application-layer input model.
-// -----------------------------------------------------------------------------
-func (request scheduleReminderRequest) toInput(applicationID domain.ApplicationID) (application.ScheduleReminderInput, error) {
-	reminderID := domain.ReminderID(request.ID)
-
-	if err := reminderID.Validate(); err != nil {
-		return application.ScheduleReminderInput{}, err
-	}
-
-	dueAt, err := parseRequiredRFC3339Time("due_at", request.DueAt)
-	if err != nil {
-		return application.ScheduleReminderInput{}, err
-	}
-
-	return application.ScheduleReminderInput{
-		ID:            reminderID,
-		ApplicationID: applicationID,
-		Title:         request.Title,
-		DueAt:         dueAt,
-	}, nil
 }
 
 // -----------------------------------------------------------------------------
@@ -135,38 +76,6 @@ func searchCriteriaFromRequest(request *http.Request) (search.ApplicationCriteri
 	}
 
 	return criteria, nil
-}
-
-// -----------------------------------------------------------------------------
-// reminderToResponse
-//
-// Converts a domain reminder into an API response model.
-// -----------------------------------------------------------------------------
-func reminderToResponse(reminder domain.Reminder) reminderResponse {
-	return reminderResponse{
-		ID:            reminder.ID.String(),
-		ApplicationID: reminder.ApplicationID.String(),
-		Title:         reminder.Title,
-		DueAt:         reminder.DueAt.Format(time.RFC3339),
-		Completed:     reminder.Completed,
-	}
-}
-
-// -----------------------------------------------------------------------------
-// remindersToResponse
-//
-// Converts domain reminders into an API collection response model.
-// -----------------------------------------------------------------------------
-func remindersToResponse(reminders []domain.Reminder) remindersResponse {
-	response := remindersResponse{
-		Reminders: make([]reminderResponse, 0, len(reminders)),
-	}
-
-	for _, reminder := range reminders {
-		response.Reminders = append(response.Reminders, reminderToResponse(reminder))
-	}
-
-	return response
 }
 
 // -----------------------------------------------------------------------------

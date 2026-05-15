@@ -29,33 +29,6 @@ type listActivityEventsExecutor interface {
 }
 
 // -----------------------------------------------------------------------------
-// scheduleReminderExecutor
-//
-// Defines the application behavior needed by the schedule reminder handler.
-// -----------------------------------------------------------------------------
-type scheduleReminderExecutor interface {
-	Execute(ctx context.Context, input application.ScheduleReminderInput) (domain.Reminder, error)
-}
-
-// -----------------------------------------------------------------------------
-// listRemindersExecutor
-//
-// Defines the application behavior needed by the list reminders handler.
-// -----------------------------------------------------------------------------
-type listRemindersExecutor interface {
-	Execute(ctx context.Context, input application.ListRemindersInput) ([]domain.Reminder, error)
-}
-
-// -----------------------------------------------------------------------------
-// completeReminderExecutor
-//
-// Defines the application behavior needed by the complete reminder handler.
-// -----------------------------------------------------------------------------
-type completeReminderExecutor interface {
-	Execute(ctx context.Context, input application.CompleteReminderInput) (domain.Reminder, error)
-}
-
-// -----------------------------------------------------------------------------
 // WorkflowHandlers
 //
 // Groups HTTP handlers for expanded application workflow API routes.
@@ -63,9 +36,7 @@ type completeReminderExecutor interface {
 type WorkflowHandlers struct {
 	searchApplications searchApplicationsExecutor
 	listActivityEvents listActivityEventsExecutor
-	scheduleReminder   scheduleReminderExecutor
-	listReminders      listRemindersExecutor
-	completeReminder   completeReminderExecutor
+	reminders          ReminderWorkflowHandlers
 	contacts           ContactWorkflowHandlers
 	documents          DocumentWorkflowHandlers
 }
@@ -78,9 +49,7 @@ type WorkflowHandlers struct {
 type WorkflowHandlerDependencies struct {
 	SearchApplications searchApplicationsExecutor
 	ListActivityEvents listActivityEventsExecutor
-	ScheduleReminder   scheduleReminderExecutor
-	ListReminders      listRemindersExecutor
-	CompleteReminder   completeReminderExecutor
+	Reminders          ReminderWorkflowDependencies
 	Contacts           ContactWorkflowDependencies
 	Documents          DocumentWorkflowDependencies
 }
@@ -94,9 +63,7 @@ func NewWorkflowHandlers(dependencies WorkflowHandlerDependencies) WorkflowHandl
 	return WorkflowHandlers{
 		searchApplications: dependencies.SearchApplications,
 		listActivityEvents: dependencies.ListActivityEvents,
-		scheduleReminder:   dependencies.ScheduleReminder,
-		listReminders:      dependencies.ListReminders,
-		completeReminder:   dependencies.CompleteReminder,
+		reminders:          NewReminderWorkflowHandlers(dependencies.Reminders),
 		contacts:           NewContactWorkflowHandlers(dependencies.Contacts),
 		documents:          NewDocumentWorkflowHandlers(dependencies.Documents),
 	}
@@ -134,36 +101,38 @@ func (handlers WorkflowHandlers) HandleApplicationSearch(response http.ResponseW
 }
 
 // -----------------------------------------------------------------------------
+// HandleReminderResource
+//
+// Routes reminder item-level workflow requests.
+// -----------------------------------------------------------------------------
+func (handlers WorkflowHandlers) HandleReminderResource(response http.ResponseWriter, request *http.Request) {
+	if reminderID, ok := reminderIDFromCompletePath(request.URL.Path); ok {
+		handlers.reminders.HandleComplete(response, request, reminderID)
+		return
+	}
+
+	if reminderID, ok := reminderIDFromResourcePath(request.URL.Path); ok {
+		handlers.reminders.HandleResource(response, request, reminderID)
+		return
+	}
+
+	writeJSON(response, http.StatusNotFound, errorResponse{Error: "route not found"})
+}
+
+// -----------------------------------------------------------------------------
 // HandleReminderComplete
 //
 // Handles reminder completion requests.
+//
+// Deprecated: route through HandleReminderResource.
 // -----------------------------------------------------------------------------
 func (handlers WorkflowHandlers) HandleReminderComplete(response http.ResponseWriter, request *http.Request) {
-	if request.Method != http.MethodPatch {
-		writeJSON(response, http.StatusMethodNotAllowed, errorResponse{Error: "method not allowed"})
+	if reminderID, ok := reminderIDFromCompletePath(request.URL.Path); ok {
+		handlers.reminders.HandleComplete(response, request, reminderID)
 		return
 	}
 
-	if handlers.completeReminder == nil {
-		writeJSON(response, http.StatusInternalServerError, errorResponse{Error: "complete reminder service is not configured"})
-		return
-	}
-
-	id, ok := reminderIDFromCompletePath(request.URL.Path)
-	if !ok {
-		writeJSON(response, http.StatusNotFound, errorResponse{Error: "route not found"})
-		return
-	}
-
-	reminder, err := handlers.completeReminder.Execute(request.Context(), application.CompleteReminderInput{
-		ID: id,
-	})
-	if err != nil {
-		writeJSON(response, http.StatusBadRequest, errorResponse{Error: err.Error()})
-		return
-	}
-
-	writeJSON(response, http.StatusOK, reminderToResponse(reminder))
+	writeJSON(response, http.StatusNotFound, errorResponse{Error: "route not found"})
 }
 
 // -----------------------------------------------------------------------------
@@ -191,7 +160,7 @@ func (handlers WorkflowHandlers) HandleApplicationWorkflow(response http.Respons
 	case "activity":
 		handlers.handleActivityEvents(response, request, applicationID)
 	case "reminders":
-		handlers.handleReminders(response, request, applicationID)
+		handlers.reminders.HandleCollection(response, request, applicationID)
 	case "contacts":
 		handlers.contacts.HandleCollection(response, request, applicationID)
 	case "documents":
@@ -228,77 +197,6 @@ func (handlers WorkflowHandlers) handleActivityEvents(response http.ResponseWrit
 	}
 
 	writeJSON(response, http.StatusOK, activityEventsToResponse(events))
-}
-
-// -----------------------------------------------------------------------------
-// handleReminders
-//
-// Handles reminder collection requests for one application.
-// -----------------------------------------------------------------------------
-func (handlers WorkflowHandlers) handleReminders(response http.ResponseWriter, request *http.Request, applicationID domain.ApplicationID) {
-	switch request.Method {
-	case http.MethodGet:
-		handlers.handleListReminders(response, request, applicationID)
-	case http.MethodPost:
-		handlers.handleScheduleReminder(response, request, applicationID)
-	default:
-		writeJSON(response, http.StatusMethodNotAllowed, errorResponse{Error: "method not allowed"})
-	}
-}
-
-// -----------------------------------------------------------------------------
-// handleScheduleReminder
-//
-// Decodes, validates, and executes the schedule reminder workflow.
-// -----------------------------------------------------------------------------
-func (handlers WorkflowHandlers) handleScheduleReminder(response http.ResponseWriter, request *http.Request, applicationID domain.ApplicationID) {
-	if handlers.scheduleReminder == nil {
-		writeJSON(response, http.StatusInternalServerError, errorResponse{Error: "schedule reminder service is not configured"})
-		return
-	}
-
-	var body scheduleReminderRequest
-
-	if err := decodeJSON(request, &body); err != nil {
-		writeJSON(response, http.StatusBadRequest, errorResponse{Error: err.Error()})
-		return
-	}
-
-	input, err := body.toInput(applicationID)
-	if err != nil {
-		writeJSON(response, http.StatusBadRequest, errorResponse{Error: err.Error()})
-		return
-	}
-
-	reminder, err := handlers.scheduleReminder.Execute(request.Context(), input)
-	if err != nil {
-		writeJSON(response, http.StatusBadRequest, errorResponse{Error: err.Error()})
-		return
-	}
-
-	writeJSON(response, http.StatusCreated, reminderToResponse(reminder))
-}
-
-// -----------------------------------------------------------------------------
-// handleListReminders
-//
-// Executes the list reminders workflow for one application.
-// -----------------------------------------------------------------------------
-func (handlers WorkflowHandlers) handleListReminders(response http.ResponseWriter, request *http.Request, applicationID domain.ApplicationID) {
-	if handlers.listReminders == nil {
-		writeJSON(response, http.StatusInternalServerError, errorResponse{Error: "list reminders service is not configured"})
-		return
-	}
-
-	reminders, err := handlers.listReminders.Execute(request.Context(), application.ListRemindersInput{
-		ApplicationID: applicationID,
-	})
-	if err != nil {
-		writeJSON(response, http.StatusBadRequest, errorResponse{Error: err.Error()})
-		return
-	}
-
-	writeJSON(response, http.StatusOK, remindersToResponse(reminders))
 }
 
 // -----------------------------------------------------------------------------
@@ -399,6 +297,32 @@ func reminderIDFromCompletePath(path string) (domain.ReminderID, bool) {
 	trimmedPath := strings.TrimPrefix(path, "/reminders/")
 	rawID := strings.TrimSuffix(trimmedPath, "/complete")
 	rawID = strings.Trim(rawID, "/")
+
+	id := domain.ReminderID(rawID)
+
+	if err := id.Validate(); err != nil {
+		return "", false
+	}
+
+	return id, true
+}
+
+// -----------------------------------------------------------------------------
+// reminderIDFromResourcePath
+//
+// Extracts the reminder identity from an item-level reminder route path.
+// -----------------------------------------------------------------------------
+func reminderIDFromResourcePath(path string) (domain.ReminderID, bool) {
+	if !strings.HasPrefix(path, "/reminders/") || strings.HasSuffix(path, "/complete") {
+		return "", false
+	}
+
+	rawID := strings.TrimPrefix(path, "/reminders/")
+	rawID = strings.Trim(rawID, "/")
+
+	if rawID == "" || strings.Contains(rawID, "/") {
+		return "", false
+	}
 
 	id := domain.ReminderID(rawID)
 

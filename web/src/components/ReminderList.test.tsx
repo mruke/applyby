@@ -1,42 +1,76 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, test, vi } from "vitest";
 
 import type { ReminderResponse } from "../types/application";
 import { ReminderList } from "./ReminderList";
 
-/**
- * buildReminder
- *
- * Creates a reminder response for reminder list component tests.
- */
 function buildReminder(completed = false): ReminderResponse {
   return {
     id: "rem-001",
     application_id: "app-001",
-    title: "Follow up with recruiter",
-    due_at: "2026-05-14T09:00:00Z",
+    title: "Send follow-up",
+    due_at: "2026-05-20T09:30:00Z",
     completed
   };
 }
 
+function renderReminderList(reminders = [buildReminder()]) {
+  const onComplete = vi.fn().mockResolvedValue(undefined);
+  const onRemove = vi.fn().mockResolvedValue(undefined);
+
+  render(
+    <MemoryRouter>
+      <ReminderList
+        applicationId="app-001"
+        reminders={reminders}
+        isCompleting={false}
+        isRemoving={false}
+        onComplete={onComplete}
+        onRemove={onRemove}
+      />
+    </MemoryRouter>
+  );
+
+  return { onComplete, onRemove };
+}
+
 describe("ReminderList", () => {
   test("renders an empty reminder state", () => {
-    render(<ReminderList isCompleting={false} onComplete={vi.fn()} reminders={[]} />);
+    render(
+      <MemoryRouter>
+        <ReminderList
+          applicationId="app-001"
+          reminders={[]}
+          isCompleting={false}
+          onComplete={vi.fn().mockResolvedValue(undefined)}
+        />
+      </MemoryRouter>
+    );
 
-    expect(screen.getByText("No reminders scheduled for this application.")).toBeInTheDocument();
+    expect(screen.getByText("No reminders scheduled yet.")).toBeInTheDocument();
   });
 
-  test("renders reminders", () => {
-    render(<ReminderList isCompleting={false} onComplete={vi.fn()} reminders={[buildReminder()]} />);
+  test("renders reminders with edit and complete actions", () => {
+    renderReminderList();
 
-    expect(screen.getByText("Follow up with recruiter")).toBeInTheDocument();
-    expect(screen.getByText(/Incomplete/)).toBeInTheDocument();
+    expect(screen.getByText("Send follow-up")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Edit" })).toHaveAttribute(
+      "href",
+      "/applications/app-001/reminders/rem-001/edit"
+    );
+    expect(screen.getByRole("button", { name: "Complete" })).toBeInTheDocument();
   });
 
-  test("completes an incomplete reminder", async () => {
-    const onComplete = vi.fn().mockResolvedValue(undefined);
+  test("does not show complete action for completed reminders", () => {
+    renderReminderList([buildReminder(true)]);
 
-    render(<ReminderList isCompleting={false} onComplete={onComplete} reminders={[buildReminder()]} />);
+    expect(screen.queryByRole("button", { name: "Complete" })).not.toBeInTheDocument();
+    expect(screen.getByText(/Completed/)).toBeInTheDocument();
+  });
+
+  test("delegates complete actions", async () => {
+    const { onComplete } = renderReminderList();
 
     fireEvent.click(screen.getByRole("button", { name: "Complete" }));
 
@@ -45,9 +79,13 @@ describe("ReminderList", () => {
     });
   });
 
-  test("does not render complete button for completed reminders", () => {
-    render(<ReminderList isCompleting={false} onComplete={vi.fn()} reminders={[buildReminder(true)]} />);
+  test("delegates remove actions", async () => {
+    const { onRemove } = renderReminderList();
 
-    expect(screen.queryByRole("button", { name: "Complete" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+
+    await waitFor(() => {
+      expect(onRemove).toHaveBeenCalledWith("rem-001");
+    });
   });
 });

@@ -14,7 +14,7 @@ import (
 // Verifies that a valid schedule reminder request converts into workflow input.
 // -----------------------------------------------------------------------------
 func TestScheduleReminderRequestConvertsToInput(t *testing.T) {
-	request := scheduleReminderRequest{
+	request := reminderRequest{
 		ID:    "rem-001",
 		Title: "Follow up",
 		DueAt: "2026-05-10T09:00:00Z",

@@ -65,10 +65,13 @@ func run() error {
 
 	workflowHandlers := api.NewWorkflowHandlers(api.WorkflowHandlerDependencies{
 		SearchApplications: application.NewSearchApplicationsService(repository),
-		ListActivityEvents: application.NewListActivityEventsService(repository),
-		ScheduleReminder:   application.NewScheduleReminderService(repository, repository),
-		ListReminders:      application.NewListRemindersService(repository),
-		CompleteReminder:   application.NewCompleteReminderService(repository, repository),
+		ListActivityEvents: application.NewListActivityEventsService(repository), Reminders: api.ReminderWorkflowDependencies{
+			ScheduleReminder: application.NewScheduleReminderService(repository, repository),
+			ListReminders:    application.NewListRemindersService(repository),
+			CompleteReminder: application.NewCompleteReminderService(repository, repository),
+			UpdateReminder:   application.NewUpdateReminderService(repository, repository),
+			RemoveReminder:   application.NewRemoveReminderService(repository, repository),
+		},
 		Contacts: api.ContactWorkflowDependencies{
 			AddContact:    application.NewAddContactService(repository, repository),
 			ListContacts:  application.NewListContactsService(repository),

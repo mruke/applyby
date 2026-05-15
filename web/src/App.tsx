@@ -8,6 +8,7 @@ import { ContactEditPage } from "./pages/ContactEditPage";
 import { DocumentEditPage } from "./pages/DocumentEditPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { ReminderEditPage } from "./pages/ReminderEditPage";
 
 /**
  * App
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/applications/:applicationId/edit" element={<ApplicationEditPage />} />
         <Route path="/applications/:applicationId/contacts/:contactId/edit" element={<ContactEditPage />} />
         <Route path="/applications/:applicationId/documents/:documentId/edit" element={<DocumentEditPage />} />
+        <Route path="/applications/:applicationId/reminders/:reminderId/edit" element={<ReminderEditPage />} />
         <Route path="/applications/:applicationId" element={<ApplicationDetailPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

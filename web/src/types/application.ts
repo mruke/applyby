@@ -150,6 +150,26 @@ export type CreateReminderRequest = {
   due_at: string;
 };
 
+// -----------------------------------------------------------------------------
+// UpdateReminderFormValues
+//
+// Represents editable values from the reminder edit form.
+// -----------------------------------------------------------------------------
+export type UpdateReminderFormValues = {
+  title: string;
+  dueAt: string;
+};
+
+// -----------------------------------------------------------------------------
+// UpdateReminderRequest
+//
+// Represents the backend request body for editing a reminder.
+// -----------------------------------------------------------------------------
+export type UpdateReminderRequest = {
+  title: string;
+  due_at: string;
+};
+
 /**
  * ActivityEventResponse
  *

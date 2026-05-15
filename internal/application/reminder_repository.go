@@ -25,6 +25,24 @@ type ReminderFinder interface {
 }
 
 // -----------------------------------------------------------------------------
+// ReminderUpdater
+//
+// Defines persistence behavior required to update an existing reminder.
+// -----------------------------------------------------------------------------
+type ReminderUpdater interface {
+	UpdateReminder(ctx context.Context, reminder domain.Reminder) error
+}
+
+// -----------------------------------------------------------------------------
+// ReminderRemover
+//
+// Defines persistence behavior required to remove one reminder.
+// -----------------------------------------------------------------------------
+type ReminderRemover interface {
+	RemoveReminder(ctx context.Context, id domain.ReminderID) error
+}
+
+// -----------------------------------------------------------------------------
 // ReminderLister
 //
 // Defines persistence behavior required to list reminders for an application.
@@ -41,5 +59,7 @@ type ReminderLister interface {
 type ReminderRepository interface {
 	ReminderSaver
 	ReminderFinder
+	ReminderUpdater
+	ReminderRemover
 	ReminderLister
 }

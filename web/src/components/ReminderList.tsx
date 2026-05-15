@@ -1,29 +1,40 @@
-import type { ReminderResponse } from "../types/application";
-import { formatDateTime } from "../utils/dateFormatting";
+import { Link } from "react-router-dom";
 
-/**
- * ReminderListProps
- *
- * Defines the reminders to render and the complete action for incomplete reminders.
- */
+import type { ReminderResponse } from "../types/application";
+import { formatLongDate } from "../utils/dateFormatting";
+
+// -----------------------------------------------------------------------------
+// ReminderListProps
+//
+// Defines reminders rendered by the reminder list component.
+// -----------------------------------------------------------------------------
 type ReminderListProps = {
-  isCompleting: boolean;
-  onComplete: (reminderId: string) => Promise<void>;
+  applicationId: string;
   reminders: ReminderResponse[];
+  isCompleting: boolean;
+  isRemoving?: boolean;
+  onComplete: (reminderId: string) => Promise<void>;
+  onRemove?: (reminderId: string) => Promise<void>;
 };
 
-/**
- * ReminderList
- *
- * Renders reminders in a readable list with a clear complete action
- * for incomplete reminders.
- */
-export function ReminderList({ isCompleting, onComplete, reminders }: ReminderListProps) {
+// -----------------------------------------------------------------------------
+// ReminderList
+//
+// Renders reminders with completion and maintenance actions.
+// -----------------------------------------------------------------------------
+export function ReminderList({
+  applicationId,
+  reminders,
+  isCompleting,
+  isRemoving = false,
+  onComplete,
+  onRemove
+}: ReminderListProps) {
   if (reminders.length === 0) {
     return (
       <section className="state-card" aria-labelledby="reminders-heading">
         <h2 id="reminders-heading">Reminders</h2>
-        <p>No reminders scheduled for this application.</p>
+        <p>No reminders scheduled yet.</p>
       </section>
     );
   }
@@ -38,15 +49,28 @@ export function ReminderList({ isCompleting, onComplete, reminders }: ReminderLi
             <div>
               <strong>{reminder.title}</strong>
               <p>
-                Due {formatDateTime(reminder.due_at)} · {reminder.completed ? "Completed" : "Incomplete"}
+                Due {formatLongDate(reminder.due_at)}
+                {reminder.completed ? " · Completed" : ""}
               </p>
             </div>
 
-            {!reminder.completed ? (
-              <button type="button" disabled={isCompleting} onClick={() => void onComplete(reminder.id)}>
-                {isCompleting ? "Completing..." : "Complete"}
-              </button>
-            ) : null}
+            <div className="stack-list__actions">
+              <Link className="secondary-button" to={`/applications/${applicationId}/reminders/${reminder.id}/edit`}>
+                Edit
+              </Link>
+
+              {!reminder.completed ? (
+                <button type="button" disabled={isCompleting} onClick={() => void onComplete(reminder.id)}>
+                  {isCompleting ? "Completing..." : "Complete"}
+                </button>
+              ) : null}
+
+              {onRemove ? (
+                <button type="button" disabled={isRemoving} onClick={() => void onRemove(reminder.id)}>
+                  {isRemoving ? "Removing..." : "Remove"}
+                </button>
+              ) : null}
+            </div>
           </li>
         ))}
       </ul>
