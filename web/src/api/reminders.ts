@@ -11,6 +11,15 @@ import type {
 import { createClientId } from "../utils/clientIds";
 
 // -----------------------------------------------------------------------------
+// rfc3339FromDateTimeLocal
+//
+// Converts a datetime-local input value into the backend timestamp format.
+// -----------------------------------------------------------------------------
+function rfc3339FromDateTimeLocal(value: string): string {
+  return new Date(value).toISOString();
+}
+
+// -----------------------------------------------------------------------------
 // buildCreateReminderRequest
 //
 // Converts form values into the backend schedule-reminder request shape.
@@ -19,7 +28,7 @@ function buildCreateReminderRequest(values: CreateReminderFormValues): CreateRem
   return {
     id: createClientId("reminder"),
     title: values.title.trim(),
-    due_at: values.dueAt
+    due_at: rfc3339FromDateTimeLocal(values.dueAt)
   };
 }
 
