@@ -19,6 +19,8 @@ const (
 	ActivityNoteAdded          ActivityEventType = "note_added"
 	ActivityReminderScheduled  ActivityEventType = "reminder_scheduled"
 	ActivityReminderCompleted  ActivityEventType = "reminder_completed"
+	ActivityReminderUpdated    ActivityEventType = "reminder_updated"
+	ActivityReminderRemoved    ActivityEventType = "reminder_removed"
 	ActivityContactAdded       ActivityEventType = "contact_added"
 	ActivityContactUpdated     ActivityEventType = "contact_updated"
 	ActivityContactRemoved     ActivityEventType = "contact_removed"
@@ -52,6 +54,8 @@ func AllActivityEventTypes() []ActivityEventType {
 		ActivityNoteAdded,
 		ActivityReminderScheduled,
 		ActivityReminderCompleted,
+		ActivityReminderUpdated,
+		ActivityReminderRemoved,
 		ActivityContactAdded,
 		ActivityContactUpdated,
 		ActivityContactRemoved,

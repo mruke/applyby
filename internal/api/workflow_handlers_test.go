@@ -370,7 +370,7 @@ func TestHandleApplicationWorkflowListsActivityEvents(t *testing.T) {
 func TestHandleApplicationWorkflowSchedulesReminder(t *testing.T) {
 	reminder := newWorkflowHandlerTestReminder(t, "rem-001", false)
 	scheduleExecutor := &fakeScheduleReminderExecutor{reminder: reminder}
-	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{ScheduleReminder: scheduleExecutor})
+	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{Reminders: ReminderWorkflowDependencies{ScheduleReminder: scheduleExecutor}})
 
 	request := httptest.NewRequest(
 		http.MethodPost,
@@ -400,7 +400,7 @@ func TestHandleApplicationWorkflowSchedulesReminder(t *testing.T) {
 func TestHandleApplicationWorkflowListsReminders(t *testing.T) {
 	reminder := newWorkflowHandlerTestReminder(t, "rem-001", false)
 	listExecutor := &fakeListRemindersExecutor{reminders: []domain.Reminder{reminder}}
-	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{ListReminders: listExecutor})
+	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{Reminders: ReminderWorkflowDependencies{ListReminders: listExecutor}})
 
 	request := httptest.NewRequest(http.MethodGet, "/applications/app-001/reminders", nil)
 	response := httptest.NewRecorder()
@@ -426,7 +426,7 @@ func TestHandleApplicationWorkflowListsReminders(t *testing.T) {
 func TestHandleReminderComplete(t *testing.T) {
 	reminder := newWorkflowHandlerTestReminder(t, "rem-001", true)
 	completeExecutor := &fakeCompleteReminderExecutor{reminder: reminder}
-	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{CompleteReminder: completeExecutor})
+	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{Reminders: ReminderWorkflowDependencies{CompleteReminder: completeExecutor}})
 
 	request := httptest.NewRequest(http.MethodPatch, "/reminders/rem-001/complete", nil)
 	response := httptest.NewRecorder()
@@ -638,7 +638,7 @@ func TestHandleApplicationWorkflowRejectsUnknownResource(t *testing.T) {
 // -----------------------------------------------------------------------------
 func TestHandleReminderCompleteRejectsWorkflowError(t *testing.T) {
 	completeExecutor := &fakeCompleteReminderExecutor{err: errors.New("complete failed")}
-	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{CompleteReminder: completeExecutor})
+	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{Reminders: ReminderWorkflowDependencies{CompleteReminder: completeExecutor}})
 
 	request := httptest.NewRequest(http.MethodPatch, "/reminders/rem-001/complete", nil)
 	response := httptest.NewRecorder()
@@ -796,5 +796,127 @@ func TestHandleApplicationWorkflowRemovesDocument(t *testing.T) {
 
 	if removeExecutor.input.ApplicationID != "app-001" || removeExecutor.input.DocumentID != "doc-001" {
 		t.Fatalf("expected application and document ids to be preserved")
+	}
+}
+
+// -----------------------------------------------------------------------------
+// fakeUpdateReminderExecutor
+//
+// Provides a fake update reminder workflow for API handler tests.
+// -----------------------------------------------------------------------------
+type fakeUpdateReminderExecutor struct {
+	reminder domain.Reminder
+	input    application.UpdateReminderInput
+	err      error
+	called   bool
+}
+
+// -----------------------------------------------------------------------------
+// Execute
+//
+// Records update reminder workflow execution and returns the configured fake result.
+// -----------------------------------------------------------------------------
+func (executor *fakeUpdateReminderExecutor) Execute(ctx context.Context, input application.UpdateReminderInput) (domain.Reminder, error) {
+	executor.called = true
+	executor.input = input
+
+	if executor.err != nil {
+		return domain.Reminder{}, executor.err
+	}
+
+	return executor.reminder, nil
+}
+
+// -----------------------------------------------------------------------------
+// fakeRemoveReminderExecutor
+//
+// Provides a fake remove reminder workflow for API handler tests.
+// -----------------------------------------------------------------------------
+type fakeRemoveReminderExecutor struct {
+	input  application.RemoveReminderInput
+	err    error
+	called bool
+}
+
+// -----------------------------------------------------------------------------
+// Execute
+//
+// Records remove reminder workflow execution and returns the configured fake result.
+// -----------------------------------------------------------------------------
+func (executor *fakeRemoveReminderExecutor) Execute(ctx context.Context, input application.RemoveReminderInput) error {
+	executor.called = true
+	executor.input = input
+
+	if executor.err != nil {
+		return executor.err
+	}
+
+	return nil
+}
+
+// -----------------------------------------------------------------------------
+// TestHandleReminderResourceUpdatesReminder
+//
+// Verifies that PATCH /reminders/{id} updates a reminder.
+// -----------------------------------------------------------------------------
+func TestHandleReminderResourceUpdatesReminder(t *testing.T) {
+	reminder := newWorkflowHandlerTestReminder(t, "rem-001", false)
+	updateExecutor := &fakeUpdateReminderExecutor{reminder: reminder}
+	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{
+		Reminders: ReminderWorkflowDependencies{UpdateReminder: updateExecutor},
+	})
+
+	request := httptest.NewRequest(
+		http.MethodPatch,
+		"/reminders/rem-001",
+		strings.NewReader(`{"title":"Send updated follow-up","due_at":"2026-05-20T09:30:00Z"}`),
+	)
+	response := httptest.NewRecorder()
+
+	handlers.HandleReminderResource(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, response.Code)
+	}
+
+	if !updateExecutor.called {
+		t.Fatal("expected update reminder workflow to be called")
+	}
+
+	if updateExecutor.input.ID != "rem-001" {
+		t.Fatalf("expected reminder id to be preserved")
+	}
+
+	if updateExecutor.input.Title != "Send updated follow-up" {
+		t.Fatalf("expected reminder title to be decoded")
+	}
+}
+
+// -----------------------------------------------------------------------------
+// TestHandleReminderResourceRemovesReminder
+//
+// Verifies that DELETE /reminders/{id} removes a reminder.
+// -----------------------------------------------------------------------------
+func TestHandleReminderResourceRemovesReminder(t *testing.T) {
+	removeExecutor := &fakeRemoveReminderExecutor{}
+	handlers := NewWorkflowHandlers(WorkflowHandlerDependencies{
+		Reminders: ReminderWorkflowDependencies{RemoveReminder: removeExecutor},
+	})
+
+	request := httptest.NewRequest(http.MethodDelete, "/reminders/rem-001", nil)
+	response := httptest.NewRecorder()
+
+	handlers.HandleReminderResource(response, request)
+
+	if response.Code != http.StatusNoContent {
+		t.Fatalf("expected status %d, got %d", http.StatusNoContent, response.Code)
+	}
+
+	if !removeExecutor.called {
+		t.Fatal("expected remove reminder workflow to be called")
+	}
+
+	if removeExecutor.input.ID != "rem-001" {
+		t.Fatalf("expected reminder id to be preserved")
 	}
 }

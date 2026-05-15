@@ -61,8 +61,20 @@ vi.mock("./api/documents", () => ({
 
 vi.mock("./api/reminders", () => ({
   completeReminder: vi.fn(),
-  getReminders: vi.fn().mockResolvedValue({ reminders: [] }),
-  scheduleReminder: vi.fn()
+  getReminders: vi.fn().mockResolvedValue({
+    reminders: [
+      {
+        id: "rem-001",
+        application_id: "app-001",
+        title: "Send follow-up",
+        due_at: "2026-05-20T09:30:00Z",
+        completed: false
+      }
+    ]
+  }),
+  removeReminder: vi.fn(),
+  scheduleReminder: vi.fn(),
+  updateReminder: vi.fn()
 }));
 
 /**
@@ -114,6 +126,12 @@ describe("App", () => {
     renderRoute("/applications/app-001/documents/doc-001/edit");
 
     expect(await screen.findByRole("heading", { level: 1, name: "Edit document metadata" })).toBeInTheDocument();
+  });
+
+  test("renders the reminder edit route", async () => {
+    renderRoute("/applications/app-001/reminders/rem-001/edit");
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Edit reminder" })).toBeInTheDocument();
   });
 
   test("renders the not found route", () => {

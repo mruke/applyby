@@ -5,15 +5,14 @@ import { getActivityEvents } from "../api/activity";
 import { getApplicationById, updateApplicationStatus } from "../api/applications";
 import { addContact, getContacts, removeContact } from "../api/contacts";
 import { addDocument, getDocuments, removeDocument } from "../api/documents";
-import { completeReminder, getReminders, scheduleReminder } from "../api/reminders";
+import { completeReminder, getReminders, removeReminder, scheduleReminder } from "../api/reminders";
 import { ActivityTimeline } from "../components/ActivityTimeline";
 import { ContactSection } from "../components/ContactSection";
 import { DocumentSection } from "../components/DocumentSection";
 import { EmptyState } from "../components/EmptyState";
 import { ErrorState } from "../components/ErrorState";
 import { LoadingState } from "../components/LoadingState";
-import { ReminderForm } from "../components/ReminderForm";
-import { ReminderList } from "../components/ReminderList";
+import { ReminderSection } from "../components/ReminderSection";
 import { StatusBadge } from "../components/StatusBadge";
 import { StatusUpdateForm } from "../components/StatusUpdateForm";
 import type {
@@ -58,6 +57,7 @@ type ApplicationDetailPageState = {
   isLoading: boolean;
   isRemovingContact: boolean;
   isRemovingDocument: boolean;
+  isRemovingReminder: boolean;
   isSubmittingReminder: boolean;
   isSubmittingStatus: boolean;
   reminders: ReminderResponse[];
@@ -234,6 +234,7 @@ export function ApplicationDetailPage() {
     isLoading: true,
     isRemovingContact: false,
     isRemovingDocument: false,
+    isRemovingReminder: false,
     isSubmittingReminder: false,
     isSubmittingStatus: false,
     reminders: [],
@@ -331,6 +332,38 @@ export function ApplicationDetailPage() {
         ...currentState,
         errorMessage: "Status could not be updated. Check the selected status and try again.",
         isSubmittingStatus: false,
+        successMessage: null
+      }));
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // handleRemoveReminder
+  //
+  // Removes a reminder, refreshes detail data, and displays feedback.
+  // ---------------------------------------------------------------------------
+  async function handleRemoveReminder(reminderId: string) {
+    setState((currentState) => ({
+      ...currentState,
+      errorMessage: null,
+      isRemovingReminder: true,
+      successMessage: null
+    }));
+
+    try {
+      await removeReminder(reminderId);
+      await loadDetailData();
+
+      setState((currentState) => ({
+        ...currentState,
+        isRemovingReminder: false,
+        successMessage: "Reminder removed."
+      }));
+    } catch {
+      setState((currentState) => ({
+        ...currentState,
+        errorMessage: "Reminder could not be removed. Try again.",
+        isRemovingReminder: false,
         successMessage: null
       }));
     }
@@ -465,6 +498,7 @@ export function ApplicationDetailPage() {
         ...currentState,
         isRemovingContact: false,
     isRemovingDocument: false,
+    isRemovingReminder: false,
         successMessage: "Contact removed."
       }));
     } catch {
@@ -473,6 +507,7 @@ export function ApplicationDetailPage() {
         errorMessage: "Contact could not be removed. Try again.",
         isRemovingContact: false,
     isRemovingDocument: false,
+    isRemovingReminder: false,
         successMessage: null
       }));
     }
@@ -502,6 +537,7 @@ export function ApplicationDetailPage() {
       setState((currentState) => ({
         ...currentState,
         isRemovingDocument: false,
+    isRemovingReminder: false,
         successMessage: "Document metadata removed."
       }));
     } catch {
@@ -509,6 +545,7 @@ export function ApplicationDetailPage() {
         ...currentState,
         errorMessage: "Document metadata could not be removed. Try again.",
         isRemovingDocument: false,
+    isRemovingReminder: false,
         successMessage: null
       }));
     }
@@ -632,22 +669,17 @@ export function ApplicationDetailPage() {
           onSubmit={handleStatusUpdate}
         />
 
-        <ReminderForm isSubmitting={state.isSubmittingReminder} onSubmit={handleScheduleReminder} />
-
-        {state.sectionErrors.reminders ? (
-          <section className="state-card" aria-labelledby="reminders-heading">
-            <h2 id="reminders-heading">Reminders</h2>
-            <p className="form-message form-message--error" role="alert">
-              {state.sectionErrors.reminders}
-            </p>
-          </section>
-        ) : (
-          <ReminderList
-            isCompleting={state.isCompletingReminder}
-            onComplete={handleCompleteReminder}
-            reminders={state.reminders}
-          />
-        )}
+        <ReminderSection
+          applicationId={state.application.id}
+          reminders={state.reminders}
+          errorMessage={state.sectionErrors.reminders}
+          isCompleting={state.isCompletingReminder}
+          isRemoving={state.isRemovingReminder}
+          isSubmitting={state.isSubmittingReminder}
+          onAdd={handleScheduleReminder}
+          onComplete={handleCompleteReminder}
+          onRemove={handleRemoveReminder}
+        />
 
         {state.sectionErrors.activity ? (
           <section className="state-card" aria-labelledby="activity-heading">

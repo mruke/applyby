@@ -6,7 +6,7 @@ import { getActivityEvents } from "../api/activity";
 import { getApplicationById, updateApplicationStatus } from "../api/applications";
 import { addContact, getContacts, removeContact } from "../api/contacts";
 import { addDocument, getDocuments, removeDocument } from "../api/documents";
-import { completeReminder, getReminders, scheduleReminder } from "../api/reminders";
+import { completeReminder, getReminders, removeReminder, scheduleReminder } from "../api/reminders";
 import type {
   ActivityEventsResponse,
   ApplicationResponse,
@@ -40,6 +40,7 @@ vi.mock("../api/documents", () => ({
 vi.mock("../api/reminders", () => ({
   completeReminder: vi.fn(),
   getReminders: vi.fn(),
+  removeReminder: vi.fn(),
   scheduleReminder: vi.fn()
 }));
 
@@ -113,6 +114,7 @@ const mockedCompleteReminder = vi.mocked(completeReminder);
  * Provides typed access to the mocked reminder list API function.
  */
 const mockedGetReminders = vi.mocked(getReminders);
+const mockedRemoveReminder = vi.mocked(removeReminder);
 
 /**
  * mockedScheduleReminder
@@ -253,6 +255,7 @@ beforeEach(() => {
   mockedGetDocuments.mockReset();
   mockedRemoveDocument.mockReset();
   mockedGetReminders.mockReset();
+  mockedRemoveReminder.mockReset();
   mockedScheduleReminder.mockReset();
   mockedUpdateApplicationStatus.mockReset();
 });
@@ -343,6 +346,24 @@ describe("ApplicationDetailPage", () => {
     );
   });
 
+  test("removes a reminder", async () => {
+    mockSuccessfulDetailLoad();
+    mockedRemoveReminder.mockResolvedValue(undefined);
+
+    renderDetailPage();
+
+    expect(await screen.findByText("Follow up with recruiter")).toBeInTheDocument();
+
+    const removeButtons = screen.getAllByRole("button", { name: "Remove" });
+    fireEvent.click(removeButtons[0]);
+
+    await waitFor(() => {
+      expect(mockedRemoveReminder).toHaveBeenCalledWith("rem-001");
+    });
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Reminder removed.");
+  });
+
   test("schedules a reminder", async () => {
     mockSuccessfulDetailLoad();
     mockedScheduleReminder.mockResolvedValue(buildRemindersResponse().reminders[0]);
@@ -430,7 +451,7 @@ describe("ApplicationDetailPage", () => {
     expect(await screen.findByText("Sam Recruiter")).toBeInTheDocument();
 
     const removeButtons = screen.getAllByRole("button", { name: "Remove" });
-    fireEvent.click(removeButtons[0]);
+    fireEvent.click(removeButtons[1]);
 
     await waitFor(() => {
       expect(mockedRemoveContact).toHaveBeenCalledWith("app-001", "contact-001");
