@@ -44,15 +44,13 @@ The first version is scoped for a single-user job-search workflow.
 
 ### 2.3 Process Constraints
 
-The project should be implemented in focused branches and focused commits.
-
-Documentation, domain modeling, persistence, API behavior, frontend behavior, tests, and benchmarks should be added in deliberate steps.
+Ongoing changes should stay focused, reviewable, and tied to clear implementation or documentation goals.
 
 ---
 
 ## 3. Solution Strategy
 
-ApplyBy will be built as a full-stack application with:
+ApplyBy is built as a full-stack application with:
 
 - a Go backend
 - a PostgreSQL database
@@ -357,13 +355,11 @@ Documentation should stay aligned with implementation state.
 
 ## 10. Architecture Decisions and Tradeoffs
 
-### 10.1 Accepted ADRs
+### 10.1 Decision References
 
 Accepted ADRs are indexed in `docs/adr/README.md`.
 
-### 10.2 Tradeoffs
-
-The primary tradeoff is deliberate structure over minimal file count.
+The primary architectural tradeoff is deliberate structure over minimal file count.
 
 ---
 
@@ -399,7 +395,8 @@ ApplyBy is built as a full-stack personal job application CRM using a Go backend
 
 The project should demonstrate disciplined architecture and practical software engineering habits.
 
-The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow. Generated data and benchmark coverage remain planned.
+The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow.
+
 
 
 

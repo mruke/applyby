@@ -1,4 +1,4 @@
-# ApplyBy
+﻿# ApplyBy
 
 ApplyBy is a personal job application CRM for tracking applications, deadlines, companies, contacts, interviews, follow-ups, documents, and outcomes.
 
@@ -50,7 +50,7 @@ The first version focuses on a single-user job-search workflow with local or sim
 
 ## Selected Implementation Direction
 
-ApplyBy will be implemented as a full-stack application with:
+ApplyBy is implemented as a full-stack application with:
 
 - Go for the backend service
 - PostgreSQL for persistence
@@ -125,4 +125,5 @@ ChatGPT was used during development as a learning, design, and review assistant.
 ## License
 
 This project is licensed under the MIT License.
+
 
