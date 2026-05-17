@@ -371,10 +371,8 @@ The primary tradeoff is deliberate structure over minimal file count.
 
 | Risk | Description | Mitigation |
 | --- | --- | --- |
-| Scope growth | The project can become too broad if all planned features are implemented at once. | Use focused branches and keep commits tied to clear goals. |
-| Stack complexity | Go, PostgreSQL, React, and TypeScript create more setup than a single-language local application. | Add setup commands gradually as runnable slices are introduced. |
 | Boundary drift | Business rules may drift into handlers, repositories, or frontend components. | Keep domain and application tests focused on lifecycle rules and workflows. |
-| Database test setup | Integration tests require a reliable PostgreSQL test setup. | Document test database setup before adding database-heavy workflows. |
+| Database test setup | Integration tests require a reliable PostgreSQL test setup. | Keep database setup instructions current in runnable documentation. |
 | Contract drift | Frontend types and backend responses can diverge. | Keep response shapes simple and document contracts as they stabilize. |
 
 ---
@@ -402,6 +400,7 @@ ApplyBy is built as a full-stack personal job application CRM using a Go backend
 The project should demonstrate disciplined architecture and practical software engineering habits.
 
 The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow. Generated data and benchmark coverage remain planned.
+
 
 
 
