@@ -36,15 +36,7 @@ ApplyBy helps a single user track and manage their job-search pipeline. The curr
 
 ### 2.1 Technical Constraints
 
-ApplyBy will use the initial implementation direction recorded in the accepted ADRs:
-
-| Area | Decision |
-| --- | --- |
-| Backend | Go |
-| Persistence | PostgreSQL |
-| Frontend | React |
-| Frontend language | TypeScript |
-| Testing | Layered tests colocated with backend packages and frontend source files |
+ApplyBy uses the implementation direction recorded in the accepted ADRs.
 
 ### 2.2 Scope Constraints
 
@@ -481,5 +473,6 @@ ApplyBy is built as a full-stack personal job application CRM using a Go backend
 The project should demonstrate disciplined architecture and practical software engineering habits.
 
 The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow. Generated data and benchmark coverage remain planned.
+
 
 
