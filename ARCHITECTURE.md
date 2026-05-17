@@ -44,7 +44,7 @@ The first version is scoped for a single-user job-search workflow.
 
 ### 2.3 Process Constraints
 
-Ongoing changes should stay focused, reviewable, and tied to clear implementation or documentation goals.
+Keep changes focused and reviewable.
 
 ---
 
@@ -396,6 +396,8 @@ ApplyBy is built as a full-stack personal job application CRM using a Go backend
 The project should demonstrate disciplined architecture and practical software engineering habits.
 
 The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow.
+
+
 
 
 
