@@ -1,6 +1,6 @@
-# Quickstart
+﻿# Quickstart
 
-ApplyBy is a local-first job application tracker. This guide explains how to start the application locally and manually verify the main user workflows.
+This guide explains how to start ApplyBy locally and manually verify the main user workflows.
 
 ## Requirements
 

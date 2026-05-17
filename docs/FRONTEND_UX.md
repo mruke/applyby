@@ -1,4 +1,4 @@
-# Frontend UX Principles
+﻿# Frontend UX Principles
 
 ApplyBy is a job application tracker. The interface should be easy to understand.
 
@@ -102,9 +102,9 @@ Recommended page structure:
 
 | Page | Purpose |
 |---|---|
-| Dashboard | Show what needs attention soon. |
-| Applications | Search, filter, scan, and open applications. |
-| Application detail | Show one application's status, reminders, contacts, documents, and activity. |
+| Dashboard | Summarize items needing attention. |
+| Applications | Provide the main application workbench. |
+| Application detail | Show one application's related records and activity. |
 | Forms | Create or update structured records with clear validation. |
 
 Ideal app shell:
@@ -247,17 +247,5 @@ The frontend should preserve the backend boundaries.
 
 ## Frontend Implementation Notes
 
-The frontend now includes:
+The frontend includes the route-level pages, API client boundary, shared types, feedback states, application list/detail views, dashboard overview, and record-management sections needed for the current prototype.
 
-- React and TypeScript project structure
-- app shell layout
-- API client boundary
-- shared frontend types
-- loading state component
-- error state component
-- empty state component
-- application list and search views
-- application detail view
-- status, reminder, contact, document metadata, and activity sections
-- basic dashboard overview
-- frontend validation and build commands
