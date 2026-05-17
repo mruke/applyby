@@ -329,15 +329,7 @@ Important user actions should be represented as activity events.
 
 Search and filtering are core product behaviors, not incidental UI features.
 
-The backend and database should provide clear query paths for common views such as:
-
-- active applications
-- upcoming follow-ups
-- applications by status
-- applications by company
-- applications by source
-- applications with interviews
-- applications needing follow-up
+The backend and database should provide clear query paths for common application views.
 
 ### 9.4 Reminder Priority
 
@@ -349,24 +341,7 @@ Priority behavior should be explicit and testable rather than hidden in UI sorti
 
 Tests should verify behavior, not implementation details.
 
-ApplyBy does not use a dedicated root `tests/` container. The current layout is:
-
-```text
-internal/.../*_test.go
-internal/storage/postgres/*_test.go
-web/src/**/*.test.ts
-web/src/**/*.test.tsx
-web/src/test/
-```
-
-| Test Area | Location | Purpose |
-| --- | --- | --- |
-| Backend package tests | Colocated as `*_test.go` files under `internal/` | Verify domain rules, application workflows, search helpers, reminder behavior, config, and API behavior. |
-| PostgreSQL repository tests | `internal/storage/postgres` | Verify database-backed repository behavior and persistence rules. |
-| Frontend tests | Colocated under `web/src` | Verify component behavior, page workflows, and UI interactions. |
-| Frontend test setup | `web/src/test` | Configure shared frontend test environment behavior. |
-
-Future end-to-end browser tests may be added later, but there is no current dedicated E2E test container.
+ApplyBy keeps tests colocated with the source areas they verify.
 ### 9.6 Documentation
 
 Documentation should stay aligned with implementation state.
@@ -439,6 +414,8 @@ ApplyBy is built as a full-stack personal job application CRM using a Go backend
 The project should demonstrate disciplined architecture and practical software engineering habits.
 
 The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow. Generated data and benchmark coverage remain planned.
+
+
 
 
 
