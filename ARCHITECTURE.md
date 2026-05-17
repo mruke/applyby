@@ -1,10 +1,8 @@
-# Architecture
+﻿# Architecture
 
 ApplyBy is a full-stack personal job application CRM.
 
-The project is intended to be both a practical job-search tool and a portfolio project focused on disciplined application design, clear domain modeling, validated workflows, persistence design, search/filtering, reminders, analytics, and layered testing.
-
-This document follows the same lightweight architecture-documentation style used across all of my projects.
+This document focuses on system boundaries, runtime structure, data flow, and tradeoffs. Product framing and current feature status live in `README.md`.
 
 ---
 
@@ -12,19 +10,7 @@ This document follows the same lightweight architecture-documentation style used
 
 ### 1.1 Purpose
 
-ApplyBy helps a single user track and manage their job-search pipeline.
-
-The application is intended to support records such as:
-
-- job applications
-- companies
-- contacts
-- interviews
-- follow-ups
-- documents
-- deadlines
-- activity history
-- outcomes
+ApplyBy helps a single user track and manage their job-search pipeline. The current user-facing feature list lives in `README.md`; this document describes how those workflows are structured.
 
 ### 1.2 Quality Goals
 
@@ -495,4 +481,5 @@ ApplyBy is built as a full-stack personal job application CRM using a Go backend
 The project should demonstrate disciplined architecture and practical software engineering habits.
 
 The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow. Generated data and benchmark coverage remain planned.
+
 
