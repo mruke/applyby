@@ -102,9 +102,9 @@ Recommended page structure:
 
 | Page | Purpose |
 |---|---|
-| Dashboard | Show what needs attention soon. |
-| Applications | Search, filter, scan, and open applications. |
-| Application detail | Show one application's status, reminders, contacts, documents, and activity. |
+| Dashboard | Summarize items needing attention. |
+| Applications | Provide the main application workbench. |
+| Application detail | Show one application's related records and activity. |
 | Forms | Create or update structured records with clear validation. |
 
 Ideal app shell:
@@ -248,3 +248,4 @@ The frontend should preserve the backend boundaries.
 ## Frontend Implementation Notes
 
 The frontend includes the route-level pages, API client boundary, shared types, feedback states, application list/detail views, dashboard overview, and record-management sections needed for the current prototype.
+
