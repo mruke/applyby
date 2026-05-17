@@ -359,23 +359,11 @@ Documentation should stay aligned with implementation state.
 
 ### 10.1 Accepted ADRs
 
-| ADR | Decision |
-| --- | --- |
-| ADR-001 | Select Go for the backend service. |
-| ADR-002 | Select PostgreSQL for persistence. |
-| ADR-003 | Select React for the frontend UI. |
-| ADR-004 | Select TypeScript for frontend implementation. |
-| ADR-005 | Select a layered testing strategy. |
+Accepted ADRs are indexed in `docs/adr/README.md`.
 
 ### 10.2 Tradeoffs
 
-| Decision | Benefit | Tradeoff |
-| --- | --- | --- |
-| Go backend | Static typing, explicit error handling, built-in testing and benchmarking, useful portfolio signal. | New language and package-structure learning curve. |
-| PostgreSQL | Strong relational modeling, constraints, indexes, search support, analytics queries. | More setup than SQLite or file-based storage. |
-| React | Component-based interactive UI development. | Adds frontend build tooling and state-management decisions. |
-| TypeScript | More explicit frontend data contracts. | Adds configuration and type complexity. |
-| Layered testing | Clear verification across domain, persistence, API, frontend, and workflows. | Requires more organization than a minimal test setup. |
+The primary tradeoff is deliberate structure over minimal file count.
 
 ---
 
@@ -414,6 +402,7 @@ ApplyBy is built as a full-stack personal job application CRM using a Go backend
 The project should demonstrate disciplined architecture and practical software engineering habits.
 
 The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow. Generated data and benchmark coverage remain planned.
+
 
 
 
