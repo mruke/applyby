@@ -42,16 +42,6 @@ ApplyBy uses the implementation direction recorded in the accepted ADRs.
 
 The first version is scoped for a single-user job-search workflow.
 
-The first version should not include:
-
-- authentication and authorization
-- employer-facing workflows
-- file upload and file storage
-- calendar integrations
-- production deployment automation
-
-Those features may be considered future extensions.
-
 ### 2.3 Process Constraints
 
 The project should be implemented in focused branches and focused commits.
@@ -473,6 +463,7 @@ ApplyBy is built as a full-stack personal job application CRM using a Go backend
 The project should demonstrate disciplined architecture and practical software engineering habits.
 
 The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow. Generated data and benchmark coverage remain planned.
+
 
 
 
