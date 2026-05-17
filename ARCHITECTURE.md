@@ -323,13 +323,7 @@ Frontend components may display available options, but backend code should enfor
 
 ### 9.2 Activity History
 
-Important user actions should eventually be represented as activity events.
-
-Activity history should help answer:
-
-- what changed
-- when it changed
-- why the current application state exists
+Important user actions should be represented as activity events.
 
 ### 9.3 Search and Filtering
 
@@ -445,6 +439,7 @@ ApplyBy is built as a full-stack personal job application CRM using a Go backend
 The project should demonstrate disciplined architecture and practical software engineering habits.
 
 The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow. Generated data and benchmark coverage remain planned.
+
 
 
 
