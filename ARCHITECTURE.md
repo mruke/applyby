@@ -199,15 +199,7 @@ Backend tests are colocated with the packages they verify as `*_test.go` files. 
 
 ### 6.2 Frontend Building Blocks
 
-The exact frontend structure may evolve during implementation, but the intended responsibilities are:
-
-| Building Block | Responsibility | Should Not Own |
-| --- | --- | --- |
-| API client | Backend request functions and response handling. | Backend business rules. |
-| Pages | Route-level screens such as application list, detail, and dashboard views. | Persistence logic. |
-| Components | Reusable UI pieces such as forms, tables, cards, filters, and status displays. | Lifecycle validation. |
-| Types | TypeScript models for frontend data and API responses. | Backend storage definitions. |
-| Tests | Colocated component, page, and helper tests under web/src. | Backend unit coverage. |
+The frontend is organized around route-level pages, reusable components, shared types, an API client boundary, and colocated tests.
 
 ---
 
@@ -453,6 +445,7 @@ ApplyBy is built as a full-stack personal job application CRM using a Go backend
 The project should demonstrate disciplined architecture and practical software engineering habits.
 
 The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow. Generated data and benchmark coverage remain planned.
+
 
 
 
