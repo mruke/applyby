@@ -15,11 +15,11 @@ ApplyBy is a personal job application CRM for tracking applications, deadlines, 
 - Frontend: React + TypeScript
 - Database: PostgreSQL
 - Demonstrates: CRUD workflows, relational persistence, search/filtering, reminders, contacts, document metadata, activity history, and layered testing
-- Status: Portfolio-ready local prototype
+- Status: First prototype
 
 ## Demo
 
-ApplyBy is demonstrated with fictional demo data. No real job applications, companies, contacts, documents, or hiring records are included.
+ApplyBy is demonstrated with fictional demo data. 
 
 - [Watch the demo video](https://youtu.be/ObvVGlxBuSs)
 - See [QUICKSTART.md](./QUICKSTART.md) for local setup
