@@ -24,33 +24,32 @@ ApplyBy is demonstrated with fictional demo data. No real job applications, comp
 - [Watch the demo video](https://youtu.be/ObvVGlxBuSs)
 - See [QUICKSTART.md](./QUICKSTART.md) for local setup
 
-## GIF Walkthrough
-
 ### Dashboard filtering
 
 You can filter applications directly from the dashboard using prebuilt summary buttons for quick triage.
 
-<img src="./docs/assets/dashboard-filtering.gif" alt="Dashboard filtering" style="max-width: 700px; width: 100%; height: auto;">
+<img src="./docs/assets/dashboard-filtering.gif" alt="Dashboard filtering" width="500">
 
 ### Create application
 
 The applications workbench provides the main management view, where new job applications can be added to ApplyBy.
 
-<img src="./docs/assets/create-application.gif" alt="Create application" style="max-width: 700px; width: 100%; height: auto;">
+<img src="./docs/assets/create-application.gif" alt="Create application" width="350">
 
 ### Workbench filtering
 
 The applications workbench supports more granular filtering for narrowing records by application details and workflow state.
 
-<img src="./docs/assets/workshop-filter.gif" alt="Workbench filtering" style="max-width: 700px; width: 100%; height: auto;">
+<img src="./docs/assets/workshop-filter.gif" alt="Workbench filtering" width="550">
 
 ### Application activity tracking
 
 Each application has its own workflow area for status updates, reminders, contacts, and document metadata. Document metadata can include URI-style references to application-related materials.
 
-<img src="./docs/assets/activity-tracking.gif" alt="Activity tracking" style="max-width: 700px; width: 100%; height: auto;">
+<img src="./docs/assets/activity-tracking.gif" alt="Activity tracking" width="700">
 
 Changes are tracked through a per-application activity feed, creating a lightweight history of important workflow events.
+
 ## Project Goals
 
 ApplyBy is designed to help an individual answer questions such as:
