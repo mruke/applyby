@@ -4,6 +4,52 @@ ApplyBy is a personal job application CRM for tracking applications, deadlines, 
 
 The project is intended to be a practical job-search tool and a portfolio project focused on disciplined application design. It emphasizes clear domain modeling, validated workflows, performance-conscious data structures, searchable records, reminder prioritization, activity history, and job-search analytics.
 
+# ApplyBy
+
+ApplyBy is a personal job application CRM for tracking applications, deadlines, companies, contacts, interviews, follow-ups, documents, and outcomes.
+
+## At a Glance
+
+- Type: Local-first full-stack job application CRM
+- Backend: Go
+- Frontend: React + TypeScript
+- Database: PostgreSQL
+- Demonstrates: CRUD workflows, relational persistence, search/filtering, reminders, contacts, document metadata, activity history, and layered testing
+- Status: First prototype
+
+## Demo
+
+ApplyBy is demonstrated with fictional demo data. 
+
+- [Watch the demo video](https://youtu.be/ObvVGlxBuSs)
+- See [QUICKSTART.md](./QUICKSTART.md) for local setup
+
+### Dashboard filtering
+
+You can filter applications directly from the dashboard using prebuilt summary buttons for quick triage.
+
+<img src="./docs/assets/dashboard-filtering.gif" alt="Dashboard filtering" width="500">
+
+### Create application
+
+The applications workbench provides the main management view, where new job applications can be added to ApplyBy.
+
+<img src="./docs/assets/create-application.gif" alt="Create application" width="350">
+
+### Workbench filtering
+
+The applications workbench supports more granular filtering for narrowing records by application details and workflow state.
+
+<img src="./docs/assets/workshop-filter.gif" alt="Workbench filtering" width="550">
+
+### Application activity tracking
+
+Each application has its own workflow area for status updates, reminders, contacts, and document metadata. Document metadata can include URI-style references to application-related materials.
+
+<img src="./docs/assets/activity-tracking.gif" alt="Activity tracking" width="700">
+
+Changes are tracked through a per-application activity feed, creating a lightweight history of important workflow events.
+
 ## Project Goals
 
 ApplyBy is designed to help an individual answer questions such as:
