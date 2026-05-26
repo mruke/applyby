@@ -1,12 +1,8 @@
-﻿# ApplyByterviews, follow-ups, documents, and outcomes.
+﻿# ApplyBy
 
 ApplyBy is a personal job application CRM for tracking applications, deadlines, companies, contacts, interview status, follow-ups, document metadata, activity history, and outcomes.
 
 The project is intended to be a practical job-search tool and a portfolio project focused on disciplined application design. It emphasizes clear domain modeling, validated workflows, performance-conscious data structures, searchable records, reminder prioritization, activity history, and dashboard summary filtering.
-
-# ApplyBy
-
-ApplyBy is a personal job application CRM for tracking applications, deadlines, companies, contacts, interviews, follow-ups, documents, and outcomes.
 
 ## At a Glance
 
