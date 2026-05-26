@@ -126,20 +126,14 @@
 
 .application-detail-layout {
   display: grid;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
-.application-detail-overview {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(18rem, 0.7fr);
-  gap: 1.5rem;
-  align-items: start;
-}
-
+.application-detail-overview,
 .application-detail-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.85fr);
-  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.75fr);
+  gap: 1.25rem;
   align-items: start;
 }
 
