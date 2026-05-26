@@ -123,3 +123,41 @@
   font-weight: 900;
   margin: 0;
 }
+
+.application-detail-layout {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.application-detail-overview,
+.application-detail-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.75fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.application-detail-main {
+  display: grid;
+  gap: 1rem;
+}
+
+.application-detail-sidebar {
+  position: sticky;
+  top: 1rem;
+}
+
+.application-detail-sidebar > * {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .application-detail-overview,
+  .application-detail-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .application-detail-sidebar {
+    position: static;
+  }
+}
