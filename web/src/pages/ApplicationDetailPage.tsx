@@ -66,99 +66,111 @@ export function ApplicationDetailPage() {
         </p>
       ) : null}
 
-      <section className="detail-grid" aria-label="Application details">
-        <article className="state-card">
-          <h2>Summary</h2>
-          <dl className="detail-list">
-            <div>
-              <dt>Status</dt>
-              <dd>
-                <StatusBadge status={state.application.status} />
-              </dd>
-            </div>
-            <div>
-              <dt>Company website</dt>
-              <dd>
-                {state.application.company_website ? (
-                  <a href={state.application.company_website}>{state.application.company_website}</a>
-                ) : (
-                  "Not specified"
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt>Source</dt>
-              <dd>{state.application.source || "Not specified"}</dd>
-            </div>
-            <div>
-              <dt>Created</dt>
-              <dd>{formatLongDate(state.application.created_at)}</dd>
-            </div>
-            <div>
-              <dt>Notes</dt>
-              <dd>{state.application.notes || "No notes added yet."}</dd>
-            </div>
-          </dl>
-        </article>
+      <section className="application-detail-layout" aria-label="Application details">
+        <div className="application-detail-overview">
+          <article className="state-card">
+            <h2>Summary</h2>
+            <dl className="detail-list">
+              <div>
+                <dt>Status</dt>
+                <dd>
+                  <StatusBadge status={state.application.status} />
+                </dd>
+              </div>
+              <div>
+                <dt>Company website</dt>
+                <dd>
+                  {state.application.company_website ? (
+                    <a href={state.application.company_website}>{state.application.company_website}</a>
+                  ) : (
+                    "Not specified"
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt>Source</dt>
+                <dd>{state.application.source || "Not specified"}</dd>
+              </div>
+              <div>
+                <dt>Created</dt>
+                <dd>{formatLongDate(state.application.created_at)}</dd>
+              </div>
+              <div>
+                <dt>Notes</dt>
+                <dd>{state.application.notes || "No notes added yet."}</dd>
+              </div>
+            </dl>
+          </article>
 
-        <div className="form-actions">
-          <Link className="secondary-button" to={`/applications/${state.application.id}/edit`}>
-            Edit application
-          </Link>
+          <article className="state-card">
+            <h2>Application controls</h2>
 
-          <button type="button" onClick={() => void actions.handleRemoveApplication()}>
-            Remove application
-          </button>
+            <StatusUpdateForm
+              currentStatus={state.application.status}
+              isSubmitting={state.isSubmittingStatus}
+              onSubmit={actions.handleStatusUpdate}
+            />
+
+            <div className="form-actions">
+              <Link className="secondary-button" to={`/applications/${state.application.id}/edit`}>
+                Edit application
+              </Link>
+
+              <button type="button" onClick={() => void actions.handleRemoveApplication()}>
+                Remove application
+              </button>
+            </div>
+          </article>
         </div>
 
-        <StatusUpdateForm
-          currentStatus={state.application.status}
-          isSubmitting={state.isSubmittingStatus}
-          onSubmit={actions.handleStatusUpdate}
-        />
+        <div className="application-detail-workspace">
+          <div className="application-detail-main">
+            <ReminderSection
+              applicationId={state.application.id}
+              reminders={state.reminders}
+              errorMessage={state.sectionErrors.reminders}
+              isCompleting={state.isCompletingReminder}
+              isRemoving={state.isRemovingReminder}
+              isSubmitting={state.isSubmittingReminder}
+              onAdd={actions.handleScheduleReminder}
+              onComplete={actions.handleCompleteReminder}
+              onRemove={actions.handleRemoveReminder}
+            />
 
-        <ReminderSection
-          applicationId={state.application.id}
-          reminders={state.reminders}
-          errorMessage={state.sectionErrors.reminders}
-          isCompleting={state.isCompletingReminder}
-          isRemoving={state.isRemovingReminder}
-          isSubmitting={state.isSubmittingReminder}
-          onAdd={actions.handleScheduleReminder}
-          onComplete={actions.handleCompleteReminder}
-          onRemove={actions.handleRemoveReminder}
-        />
+            <ContactSection
+              applicationId={state.application.id}
+              contacts={state.contacts}
+              errorMessage={state.sectionErrors.contacts}
+              isAdding={state.isAddingContact}
+              isRemoving={state.isRemovingContact}
+              onAdd={actions.handleAddContact}
+              onRemove={actions.handleRemoveContact}
+            />
 
-        {state.sectionErrors.activity ? (
-          <section className="state-card" aria-labelledby="activity-heading">
-            <h2 id="activity-heading">Activity</h2>
-            <p className="form-message form-message--error" role="alert">
-              {state.sectionErrors.activity}
-            </p>
-          </section>
-        ) : (
-          <ActivityTimeline events={state.activityEvents} />
-        )}
+            <DocumentSection
+              applicationId={state.application.id}
+              documents={state.documents}
+              errorMessage={state.sectionErrors.documents}
+              isAdding={state.isAddingDocument}
+              isRemoving={state.isRemovingDocument}
+              onAdd={actions.handleAddDocument}
+              onRemove={actions.handleRemoveDocument}
+            />
+          </div>
 
-        <ContactSection
-          applicationId={state.application.id}
-          contacts={state.contacts}
-          errorMessage={state.sectionErrors.contacts}
-          isAdding={state.isAddingContact}
-          isRemoving={state.isRemovingContact}
-          onAdd={actions.handleAddContact}
-          onRemove={actions.handleRemoveContact}
-        />
-
-        <DocumentSection
-          applicationId={state.application.id}
-          documents={state.documents}
-          errorMessage={state.sectionErrors.documents}
-          isAdding={state.isAddingDocument}
-          isRemoving={state.isRemovingDocument}
-          onAdd={actions.handleAddDocument}
-          onRemove={actions.handleRemoveDocument}
-        />
+          <aside className="application-detail-sidebar" aria-label="Application activity">
+            {state.sectionErrors.activity ? (
+              <section className="state-card" aria-labelledby="activity-heading">
+                <h2 id="activity-heading">Activity</h2>
+                <p className="form-message form-message--error" role="alert">
+                  {state.sectionErrors.activity}
+                </p>
+              </section>
+            ) : (
+              <ActivityTimeline events={state.activityEvents} />
+            )}
+          </aside>
+        </div>
       </section>
     </>
   );
