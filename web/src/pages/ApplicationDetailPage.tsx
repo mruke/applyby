@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-
 import { removeApplication, updateApplicationStatus } from "../api/applications";
 import { addContact, removeContact } from "../api/contacts";
 import { addDocument, removeDocument } from "../api/documents";
@@ -16,19 +15,14 @@ import { ReminderSection } from "../components/ReminderSection";
 import { StatusBadge } from "../components/StatusBadge";
 import { StatusUpdateForm } from "../components/StatusUpdateForm";
 import type {
-  ActivityEventResponse,
-  ApplicationResponse,
   ApplicationStatus,
-  ContactResponse,
   CreateContactFormValues,
   CreateDocumentFormValues,
-  CreateReminderFormValues,
-  DocumentResponse,
-  ReminderResponse
+  CreateReminderFormValues
 } from "../types/application";
-import { emptySectionErrors, fetchApplicationDetailData } from "./applicationDetailData";
-import type { ApplicationDetailData, SectionErrorMessages } from "./applicationDetailData";
 import { formatLongDate } from "../utils/dateFormatting";
+import { emptySectionErrors, fetchApplicationDetailData } from "./applicationDetailData";
+import type { ApplicationDetailData } from "./applicationDetailData";
 
 /**
  * ApplicationDetailPageState
@@ -41,15 +35,14 @@ type ApplicationDetailPageState = ApplicationDetailData & {
   isAddingDocument: boolean;
   isCompletingReminder: boolean;
   isLoading: boolean;
-  isRemovingApplication: boolean;
   isRemovingContact: boolean;
   isRemovingDocument: boolean;
   isRemovingReminder: boolean;
-  isSchedulingReminder: boolean;
   isSubmittingReminder: boolean;
   isSubmittingStatus: boolean;
   successMessage: string | null;
 };
+
 /**
  * applyDetailData
  *
@@ -92,11 +85,9 @@ export function ApplicationDetailPage() {
     isAddingDocument: false,
     isCompletingReminder: false,
     isLoading: true,
-    isRemovingApplication: false,
     isRemovingContact: false,
     isRemovingDocument: false,
     isRemovingReminder: false,
-    isSchedulingReminder: false,
     isSubmittingReminder: false,
     isSubmittingStatus: false,
     reminders: [],
@@ -395,8 +386,6 @@ export function ApplicationDetailPage() {
       setState((currentState) => ({
         ...currentState,
         isRemovingContact: false,
-    isRemovingDocument: false,
-    isRemovingReminder: false,
         successMessage: "Contact removed."
       }));
     } catch {
@@ -404,8 +393,6 @@ export function ApplicationDetailPage() {
         ...currentState,
         errorMessage: "Contact could not be removed. Try again.",
         isRemovingContact: false,
-    isRemovingDocument: false,
-    isRemovingReminder: false,
         successMessage: null
       }));
     }
@@ -435,7 +422,6 @@ export function ApplicationDetailPage() {
       setState((currentState) => ({
         ...currentState,
         isRemovingDocument: false,
-    isRemovingReminder: false,
         successMessage: "Document metadata removed."
       }));
     } catch {
@@ -443,7 +429,6 @@ export function ApplicationDetailPage() {
         ...currentState,
         errorMessage: "Document metadata could not be removed. Try again.",
         isRemovingDocument: false,
-    isRemovingReminder: false,
         successMessage: null
       }));
     }
