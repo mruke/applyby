@@ -1,4 +1,4 @@
-﻿# Architecture
+# Architecture
 
 ApplyBy is a full-stack personal job application CRM.
 
@@ -16,7 +16,7 @@ ApplyBy helps a single user track and manage their job-search pipeline. The curr
 
 | Goal | Description |
 | --- | --- |
-| Clear boundaries | Domain, application, storage, API, frontend, search, reminders, and analytics responsibilities should stay separate. |
+| Clear boundaries | Domain, application, storage, API, frontend, search, and reminders responsibilities should stay separate. |
 | Low coupling | Backend layers should depend on stable domain and application contracts rather than concrete infrastructure details. |
 | Testability | Domain and application behavior should be testable without running the full frontend or database. |
 | Practical scope | The project should show thoughtful full-stack design without becoming a production SaaS platform in its first version. |
@@ -26,8 +26,8 @@ ApplyBy helps a single user track and manage their job-search pipeline. The curr
 
 | Stakeholder | Interest |
 | --- | --- |
-| Author | Build a disciplined full-stack portfolio project and practice good engineering habits. |
-| Job seeker user | Track applications, deadlines, follow-ups, contacts, interviews, and outcomes. |
+| Author/Admin | Build a disciplined full-stack portfolio project and practice good engineering habits. |
+| Job seeking user | Track applications, deadlines, follow-ups, contacts, interview status, and outcomes. |
 | Reviewer or employer | Understand the architecture, design tradeoffs, implementation scope, and testing approach. |
 
 ---
@@ -67,7 +67,6 @@ The backend should be implemented in layers:
 | API | HTTP request parsing, response formatting, routing, and error mapping. |
 | Search | Search and filter behavior when the behavior is large enough to deserve separation. |
 | Reminders | Follow-up and due-date behavior when the behavior is large enough to deserve separation. |
-| Analytics | Job-search summaries and reporting data. |
 | Config | Runtime configuration loading and validation. |
 
 Business rules should live in backend domain and application code.
@@ -192,7 +191,6 @@ Backend tests are colocated with the packages they verify as `*_test.go` files. 
 | `api` | Routes, request parsing, response formatting, error mapping, handler tests. | Business rules. |
 | `search` | Search criteria, filter criteria, sort criteria, search-related validation. | UI rendering. |
 | `reminders` | Due reminder selection, priority behavior, follow-up scheduling behavior. | API routing or frontend display. |
-| `analytics` | Job-search summaries and reporting data. | Frontend rendering. |
 | `config` | Configuration loading and validation. | Domain behavior. |
 
 ### 6.2 Frontend Building Blocks
@@ -267,14 +265,13 @@ Search and filtering should rely on intentional query paths rather than ad hoc f
 
 ApplyBy data is naturally relational.
 
-### 8.1 Planned Records
+### 8.1 Current Records
 
 | Record | Description |
 | --- | --- |
 | Application | A tracked job opportunity or submitted job application. |
 | Company | An organization associated with one or more applications. |
-| Contact | A person associated with a company, application, referral, recruiter interaction, or interview process. |
-| Interview | A scheduled or completed interview event. |
+| Contact | A person associated with a company, application, referral, or recruiter interaction. |
 | Reminder | A follow-up or deadline item. |
 | Document | Metadata for a resume, cover letter, portfolio item, or related file. |
 | Activity Event | A historical event describing something that happened in the system. |
@@ -289,14 +286,19 @@ Company
 
 Application
   -> belongs to Company
-  -> many Interviews
+  -> has a lifecycle status
   -> many Reminders
   -> many Documents
   -> many Activity Events
   -> many Status History entries
 ```
 
-### 8.3 PostgreSQL Responsibilities
+### 8.3 Deferred Records
+
+Dedicated interview records and expanded job-search analytics are deferred.
+
+
+### 8.4 PostgreSQL Responsibilities
 
 PostgreSQL should support:
 
@@ -305,7 +307,7 @@ PostgreSQL should support:
 - foreign keys
 - indexed search and filtering
 - due reminder queries
-- analytics-oriented queries
+- dashboard summary and filtering queries
 
 The first persistence implementation should avoid overcomplicated schema design. The schema should support the first application workflows while leaving room for later features.
 
@@ -379,8 +381,8 @@ The primary architectural tradeoff is deliberate structure over minimal file cou
 | --- | --- |
 | Application | A tracked job opportunity or submitted job application. |
 | Company | An organization associated with one or more applications. |
-| Contact | A person connected to a company, role, referral, recruiter interaction, or interview process. |
-| Interview | A scheduled or completed interview event for an application. |
+| Contact | A person connected to a company, role, referral, recruiter interaction, or application process. |
+| Interview status | An application lifecycle status indicating that an application is in an interview stage. |
 | Reminder | A follow-up or deadline item associated with the job-search workflow. |
 | Activity Event | A historical record of something that happened in the system, such as a status change or note update. |
 | Status Transition | A change from one application lifecycle status to another. |
@@ -396,17 +398,3 @@ ApplyBy is built as a full-stack personal job application CRM using a Go backend
 The project should demonstrate disciplined architecture and practical software engineering habits.
 
 The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow.
-
-
-
-
-
-
-
-
-
-
-
-
-
-

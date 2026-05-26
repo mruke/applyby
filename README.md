@@ -1,8 +1,8 @@
-﻿# ApplyBy
+﻿# ApplyByterviews, follow-ups, documents, and outcomes.
 
-ApplyBy is a personal job application CRM for tracking applications, deadlines, companies, contacts, interviews, follow-ups, documents, and outcomes.
+ApplyBy is a personal job application CRM for tracking applications, deadlines, companies, contacts, interview status, follow-ups, document metadata, activity history, and outcomes.
 
-The project is intended to be a practical job-search tool and a portfolio project focused on disciplined application design. It emphasizes clear domain modeling, validated workflows, performance-conscious data structures, searchable records, reminder prioritization, activity history, and job-search analytics.
+The project is intended to be a practical job-search tool and a portfolio project focused on disciplined application design. It emphasizes clear domain modeling, validated workflows, performance-conscious data structures, searchable records, reminder prioritization, activity history, and dashboard summary filtering.
 
 # ApplyBy
 
@@ -123,7 +123,7 @@ The project has reached the original finished-prototype goal. The remaining item
 | 9 | User interface | Add dashboard, application workbench, detail views, edit pages, forms, lists, status controls, reminders, contacts, documents, and activity history. | Complete |
 | 10 | CRUD completion | Add application detail editing, contact maintenance, document metadata maintenance, reminder maintenance, and application removal. | Complete |
 | 11 | UX hardening | Add accessible color treatment, split application workbench layout, long-list handling, and dashboard summary filtering. | Complete |
-| 12 | Documentation and engineering audit | Update documentation to match the completed prototype and audit engineering quality. | In progress |
+| 12 | Documentation and engineering audit | Update documentation to match the completed prototype and audit engineering quality. | Complete |
 | 13 | Analytics and benchmarks | Add generated data and benchmark coverage for search, reminders, analytics, and relationship traversal. | Deferred |
 | 14 | Deployment and packaging | Decide whether the app remains local-first or becomes hosted/packageable for non-technical users. | Deferred |
 ## Current CRUD Coverage
@@ -153,7 +153,8 @@ The following areas are intentionally deferred beyond the current single-user pr
 - File upload and file storage
 - Calendar integrations
 - Notification delivery
-- Expanded analytics
+- Add job-search analytics, such as response rates by source, time-to-response, interview conversion rates, and outcome summaries.
+- Add generated data and benchmark coverage for search, reminders, analytics, and relationship traversal.
 - Generated data and benchmark coverage
 - End-to-end browser automation
 ## Documentation
@@ -171,5 +172,3 @@ ChatGPT was used during development as a learning, design, and review assistant.
 ## License
 
 This project is licensed under the MIT License.
-
-
