@@ -6,11 +6,27 @@ This guide explains how to start ApplyBy locally and manually verify the main us
 
 Install:
 
-- Go
-- Node.js and npm
-- Docker Desktop or another Docker-compatible runtime
+- Go 1.24+
+- Node.js 22 LTS (or later) with npm
+- Docker Desktop, or another Docker-compatible runtime, with WSL2 backend enabled on Windows
 - Git
 - PowerShell
+
+## Windows Setup Notes
+
+Docker Desktop on Windows requires WSL2. If it isn't already installed:
+
+```powershell
+wsl --install
+```
+
+Restart your computer afterward, then confirm it's active:
+
+```powershell
+wsl --status
+```
+
+This project runs Postgres on port `5433` instead of the default `5432`, to avoid conflicts with any local PostgreSQL installation that may already be using `5432`.
 
 ## 1. Install Frontend Dependencies
 
@@ -35,7 +51,7 @@ docker compose up -d
 In a dedicated terminal from the repository root:
 
 ```powershell
-$env:APPLYBY_DATABASE_URL = "postgres://applyby:applyby@localhost:5432/applyby?sslmode=disable"
+$env:APPLYBY_DATABASE_URL = "postgres://applyby:applyby@localhost:5433/applyby?sslmode=disable"
 $env:APPLYBY_HTTP_ADDR = ":8080"
 go run ./cmd/applyby-api
 ```
@@ -89,6 +105,23 @@ Stop the database from the repository root:
 ```powershell
 docker compose down
 ```
+
+## Troubleshooting
+
+**`docker compose up -d` fails with a tar/layer extraction error**
+Usually a corrupted image pull, often after a fresh WSL2 install. Retry:
+```powershell
+docker compose down
+docker compose up -d
+```
+If it persists, clear cached layers and re-pull:
+```powershell
+docker system prune -a
+docker compose up -d
+```
+
+**Backend fails with `password authentication failed for user "applyby"`**
+A local PostgreSQL installation may already be bound to the port and intercepting the connection. Confirm nothing else is listening on port 5433, or stop any local PostgreSQL service if one is installed.
 
 ## Notes
 

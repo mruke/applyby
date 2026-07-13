@@ -19,6 +19,9 @@ desktop.ini
 .env
 .env.*
 !.env.example
+run-api.ps1
+run-web.ps1
+start-all.ps1
 
 # ---------------------------------------------------------------------------
 # Python
