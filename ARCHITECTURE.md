@@ -20,7 +20,7 @@ ApplyBy helps a single user track and manage their job-search pipeline. The curr
 | Low coupling | Backend layers should depend on stable domain and application contracts rather than concrete infrastructure details. |
 | Testability | Domain and application behavior should be testable without running the full frontend or database. |
 | Practical scope | The project should show thoughtful full-stack design without becoming a production SaaS platform in its first version. |
-| Portfolio value | The project should demonstrate Go, PostgreSQL, React, TypeScript, data modeling, workflow validation, and layered tests. |
+| Portfolio value | The project should demonstrate full-stack engineering practice: data modeling, workflow validation, and layered tests. See Section 3 for the stack. |
 
 ### 1.3 Stakeholders
 
@@ -57,17 +57,7 @@ ApplyBy is built as a full-stack application with:
 - a React + TypeScript frontend
 - layered tests
 
-The backend should be implemented in layers:
-
-| Layer | Responsibility |
-| --- | --- |
-| Domain | Core entities, value objects, lifecycle rules, and validation. |
-| Application | Use cases and workflows. |
-| Storage | PostgreSQL persistence, migrations, repositories, and database-backed queries. |
-| API | HTTP request parsing, response formatting, routing, and error mapping. |
-| Search | Search and filter behavior when the behavior is large enough to deserve separation. |
-| Reminders | Follow-up and due-date behavior when the behavior is large enough to deserve separation. |
-| Config | Runtime configuration loading and validation. |
+The backend is implemented in layers: `domain`, `application`, `storage`, `api`, `search`, `reminders`, and `config`. See Section 6.1 for each layer's responsibility and what it should not own.
 
 Business rules should live in backend domain and application code.
 
@@ -80,19 +70,20 @@ Business rules should not be hidden in:
 
 ---
 
-## 4. System Context
+## 4. System Context and Containers
 
-ApplyBy is intended for one user managing their own job-search pipeline.
+ApplyBy is intended for one user managing their own job-search pipeline. It is organized around three runtime containers; tests are not a runtime container, they are colocated with the source areas they verify.
 
-```text
-+--------+        +-------------------+        +-------------------+
-| User   | -----> | React Frontend    | -----> | Go Backend API    |
-+--------+        +-------------------+        +-------------------+
-                                                        |
-                                                        v
-                                                +-------------------+
-                                                | PostgreSQL        |
-                                                +-------------------+
+```mermaid
+flowchart TD
+    User["User"]
+    Frontend["React Frontend<br/>TypeScript"]
+    Backend["Go Backend API"]
+    DB["PostgreSQL"]
+
+    User --> Frontend
+    Frontend --> Backend
+    Backend --> DB
 ```
 
 ### 4.1 External Actors
@@ -103,39 +94,7 @@ ApplyBy is intended for one user managing their own job-search pipeline.
 | Browser | Runs the React frontend. |
 | PostgreSQL | Stores job-search records and supports query paths. |
 
-### 4.2 Deferred External Systems
-
-| System | Reason Deferred |
-| --- | --- |
-| Email provider | Inbox sync would increase scope and require authorization concerns. |
-| Calendar provider | Calendar sync is useful but not required for the first version. |
-| Job boards | Scraping or importing job posts would expand the project beyond the core tracker. |
-| AI services | Resume rewriting or matching is future work, not part of the first version. |
-
----
-
-## 5. Container View
-
-ApplyBy is organized around three runtime containers. Tests are not a runtime container; they are colocated with the source areas they verify.
-
-```text
-+-------------------+
-| React Frontend    |
-| TypeScript        |
-+-------------------+
-          |
-          v
-+-------------------+
-| Go Backend API    |
-+-------------------+
-          |
-          v
-+-------------------+
-| PostgreSQL        |
-+-------------------+
-```
-
-### 5.1 Containers
+### 4.2 Containers
 
 | Container | Technology | Responsibility |
 | --- | --- | --- |
@@ -144,7 +103,8 @@ ApplyBy is organized around three runtime containers. Tests are not a runtime co
 | PostgreSQL | PostgreSQL | Durable relational storage for job-search data. |
 
 Testing remains layered, but the test code is not represented as a separate container. Go tests live beside the packages they verify, PostgreSQL repository tests live with the PostgreSQL adapter, and frontend tests live under `web/src`.
-### 5.2 Important Boundary Rules
+
+### 4.3 Important Boundary Rules
 
 | Rule | Reason |
 | --- | --- |
@@ -152,6 +112,15 @@ Testing remains layered, but the test code is not represented as a separate cont
 | HTTP handlers should not contain business rules. | Handlers should translate transport concerns into application use cases. |
 | Repositories should not own workflow rules. | Storage should persist and query data, not decide valid business behavior. |
 | Domain code should not depend on infrastructure. | Domain rules should remain simple, portable, and testable. |
+
+## 5. Deferred External Systems
+
+| System | Reason Deferred |
+| --- | --- |
+| Email provider | Inbox sync would increase scope and require authorization concerns. |
+| Calendar provider | Calendar sync is useful but not required for the first version. |
+| Job boards | Scraping or importing job posts would expand the project beyond the core tracker. |
+| AI services | Resume rewriting or matching is future work, not part of the first version. |
 
 ---
 
@@ -170,6 +139,7 @@ cmd/
     wiring.go
 
 internal/
+  analytics/
   api/
   application/
   config/
@@ -179,6 +149,8 @@ internal/
   storage/
     postgres/
 ```
+
+`internal/analytics` is currently a placeholder package (no implemented behavior yet), reserved for the deferred analytics work described in `README.md`.
 
 Backend tests are colocated with the packages they verify as `*_test.go` files. PostgreSQL repository tests live under `internal/storage/postgres`.
 ### 6.1 Backend Building Blocks
@@ -192,10 +164,11 @@ Backend tests are colocated with the packages they verify as `*_test.go` files. 
 | `search` | Search criteria, filter criteria, sort criteria, search-related validation. | UI rendering. |
 | `reminders` | Due reminder selection, priority behavior, follow-up scheduling behavior. | API routing or frontend display. |
 | `config` | Configuration loading and validation. | Domain behavior. |
+| `analytics` | Placeholder for job-search summary/reporting behavior. Not yet implemented. | Frontend rendering, persistence-specific implementation details. |
 
 ### 6.2 Frontend Building Blocks
 
-The frontend is organized around route-level pages, reusable components, shared types, an API client boundary, and colocated tests.
+See `docs/FRONTEND_UX.md`'s "Frontend Architecture Rules" for how the frontend is organized (route-level pages, components, shared types, API client boundary).
 
 ---
 
@@ -317,9 +290,7 @@ The first persistence implementation should avoid overcomplicated schema design.
 
 ### 9.1 Domain Rules
 
-Application lifecycle rules should be centralized in backend domain/application layers.
-
-Frontend components may display available options, but backend code should enforce valid transitions.
+Application lifecycle rules are centralized in backend domain/application layers. See Section 4.3 for the frontend/backend boundary rule this implies.
 
 ### 9.2 Activity History
 
@@ -344,14 +315,7 @@ Tests should verify behavior, not implementation details.
 ApplyBy keeps tests colocated with the source areas they verify.
 ### 9.6 Documentation
 
-Documentation should stay aligned with implementation state.
-
-| Document | Responsibility |
-| --- | --- |
-| `README.md` | High-level project overview, purpose, stack, status, and portfolio framing. |
-| `QUICKSTART.md` | Practical setup and run commands once runnable slices exist. |
-| `ARCHITECTURE.md` | System boundaries, design strategy, runtime views, and tradeoffs. |
-| `docs/adr/` | Concrete architecture decisions. |
+Documentation should stay aligned with implementation state. See `README.md` for the full documentation map.
 
 ---
 
@@ -377,24 +341,11 @@ The primary architectural tradeoff is deliberate structure over minimal file cou
 
 ## 12. Glossary
 
+Core record definitions (Application, Company, Contact, Reminder, Document, Activity Event, Status History) are in Section 8.1. Terms not covered there:
+
 | Term | Definition |
 | --- | --- |
-| Application | A tracked job opportunity or submitted job application. |
-| Company | An organization associated with one or more applications. |
-| Contact | A person connected to a company, role, referral, recruiter interaction, or application process. |
 | Interview status | An application lifecycle status indicating that an application is in an interview stage. |
-| Reminder | A follow-up or deadline item associated with the job-search workflow. |
-| Activity Event | A historical record of something that happened in the system, such as a status change or note update. |
 | Status Transition | A change from one application lifecycle status to another. |
 | Repository | A storage abstraction used by application code to persist and retrieve data. |
 | Use Case | An application workflow such as creating an application, updating status, or scheduling a follow-up. |
-
----
-
-## 13. Summary
-
-ApplyBy is built as a full-stack personal job application CRM using a Go backend, PostgreSQL persistence, React frontend, TypeScript frontend implementation, and layered testing.
-
-The project should demonstrate disciplined architecture and practical software engineering habits.
-
-The current implementation includes backend domain modeling, persistence, API routes, and frontend behavior for the single-user job-search workflow.
