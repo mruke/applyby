@@ -235,17 +235,18 @@ Errors should be direct and recoverable. Avoid vague messages such as `Something
 
 ## Frontend Architecture Rules
 
-The frontend should preserve the backend boundaries.
+The frontend should preserve the backend boundaries described in `ARCHITECTURE.md` Section 4.3 (frontend components should not own business/lifecycle rules). In addition:
 
 | Rule | Reason |
 |---|---|
 | Keep API calls in an API client layer. | Components should not know request details. |
 | Keep shared TypeScript types in a dedicated area. | API data shapes should be easy to find. |
-| Keep business rules out of React components. | Backend domain/application layers own workflow correctness. |
 | Keep route-level pages separate from reusable components. | Page orchestration and component display have different responsibilities. |
 | Keep UI state local unless it needs to be shared. | Avoid unnecessary global state. |
 
 ## Frontend Implementation Notes
 
 The frontend includes the route-level pages, API client boundary, shared types, feedback states, application list/detail views, dashboard overview, and record-management sections needed for the current prototype.
+
+
 
