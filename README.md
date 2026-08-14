@@ -1,5 +1,7 @@
 ﻿# ApplyBy
 
+ ![CI](https://github.com/mruke/applyby/actions/workflows/ci.yml/badge.svg)
+
 ApplyBy is a personal job application CRM for tracking applications, deadlines, companies, contacts, interview status, follow-ups, documents, and activity history.
 
 It's built as both a practical job-search tool and a portfolio project focused on disciplined design: clear domain modeling, validated workflows, searchable records, and reminder prioritization.
