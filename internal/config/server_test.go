@@ -12,7 +12,7 @@ func TestLoadServerConfigUsesDefaultHTTPAddress(t *testing.T) {
 
 	config := LoadServerConfig()
 
-	if config.HTTPAddress != ":8080" {
+	if config.HTTPAddress != "127.0.0.1:8080" {
 		t.Fatalf("expected default HTTP address, got %q", config.HTTPAddress)
 	}
 }
